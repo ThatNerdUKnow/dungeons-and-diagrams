@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
-
 	"dungeons-and-diagrams/board"
+	"fmt"
+	"math/rand"
 
 	"github.com/aclements/go-z3/z3"
 	"github.com/charmbracelet/log"
@@ -31,20 +31,14 @@ func main() {
 	}
 
 	brd := board.NewBoard("Foo")
-	brd.SetColTotals([8]int{1, 2, 3, 4, 5, 6, 7, 8})
-	//brd.SetCell(0, 0, board.Wall)
-	//brd.SetCell(0, 1, board.Wall)
-	//brd.SetCell(0, 2, board.Wall)
-	//brd.SetCell(0, 3, board.Wall)
-	//brd.SetCell(0, 4, board.Wall)
-	//brd.SetCell(0, 5, board.Wall)
-	//brd.SetCell(0, 6, board.Wall)
-	//brd.SetCell(0, 7, board.Wall)
-	//brd.SetCell(5, 5, board.Treasure)
-	//brd.SetCell(7, 6, board.Monster)
-	//brd.SetCell(2, 2, board.Monster)
-	//brd.SetCell(7, 5, board.Space)
-	//brd.SetCell(7, 7, board.Space)
+	perm := rand.Perm(8)
+	var colTotals [8]int
+	var rowTotals [8]int
+	copy(colTotals[:], perm)
+	perm = rand.Perm(8)
+	copy(rowTotals[:], perm)
+	brd.SetColTotals(colTotals)
+	brd.SetRowTotals(rowTotals)
 	fmt.Println(brd)
 
 	nb, err := brd.Solve()

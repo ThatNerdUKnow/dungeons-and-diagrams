@@ -59,11 +59,25 @@ func (b *Board) checkcols() {
 		b.slv.Assert(sum.Eq(b.intToConst(0)))
 		for y := range BOARD_DIM {
 			cond := address(x, y, &b.symbols).Eq(b.intToConst(int(Wall)))
-			//cond := b.symbols[y][x].Eq(b.intToConst(int(Wall)))
 			AddBoolToInt(&sum, &cond)
 		}
-		//assertion_const := b.ctx.BoolConst(fmt.Sprintf("%s-satisfied", constname))
 		assertion := sum.Eq(b.intToConst(b.ColTotals[x]))
+		log.Debug(assertion)
+		b.slv.Assert(assertion)
+	}
+}
+
+func (b *Board) checkrows() {
+	for y := range BOARD_DIM {
+		constname := fmt.Sprintf("row_%d_sum_%d", y, b.RowTotals[y])
+		sum := b.ctx.IntConst(constname)
+		b.slv.Assert(sum.Eq(b.intToConst(0)))
+		for x := range BOARD_DIM {
+			cond := address(x, y, &b.symbols).Eq(b.intToConst(int(Wall)))
+
+			AddBoolToInt(&sum, &cond)
+		}
+		assertion := sum.Eq(b.intToConst(b.RowTotals[y]))
 		log.Debug(assertion)
 		b.slv.Assert(assertion)
 	}
@@ -186,6 +200,7 @@ func (b Board) Solve() (*Board, error) {
 		}*/
 
 	b.checkcols()
+	b.checkrows()
 	log.Info(b.slv)
 	sat, err := b.slv.Check()
 	if !sat {
