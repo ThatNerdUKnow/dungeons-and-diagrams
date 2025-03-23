@@ -57,11 +57,12 @@ func (b *Board) checkcols() {
 		constname := fmt.Sprintf("col_%d_sum_%d", x, b.ColTotals[x])
 		sum := b.ctx.IntConst(constname)
 		for y := range BOARD_DIM {
-			cond := b.symbols[y][x].Eq(b.intToConst(int(Wall)))
+			cond := address(x, y, &b.symbols).Eq(b.intToConst(int(Wall)))
+			//cond := b.symbols[y][x].Eq(b.intToConst(int(Wall)))
 			AddBoolToInt(&sum, &cond)
 		}
-		assertion_const := b.ctx.BoolConst(fmt.Sprintf("%s-satisfied", constname))
-		assertion := assertion_const.Eq(sum.Eq(b.intToConst(1)))
+		//assertion_const := b.ctx.BoolConst(fmt.Sprintf("%s-satisfied", constname))
+		assertion := sum.Eq(b.intToConst(1))
 		log.Debug(assertion)
 		b.slv.Assert(assertion)
 	}
@@ -79,7 +80,9 @@ func (b *Board) SetCell(x int, y int, cell Cell) error {
 	if (x < BOARD_MIN || y < BOARD_MIN || x > len(b.Cells)) || y > len(b.Cells[0]) {
 		return fmt.Errorf("coordinates (%d,%d) are out of bounds", x, y)
 	}
-	b.Cells[y][x] = cell
+
+	*address(x, y, &b.Cells) = cell
+	//b.Cells[y][x] = cell
 	return nil
 }
 
@@ -92,10 +95,20 @@ func (b Board) String() string {
 	}
 	sb.WriteString("\n")
 
-	for y, col := range b.Cells {
+	/*
+		for y, col := range b.Cells {
+			sb.WriteString(fmt.Sprint(b.RowTotals[y]))
+			for _, cell := range col {
+				//sb.WriteString(fmt.Sprintf("(%d,%d) ", x, y))
+				sb.WriteString(fmt.Sprint(cell.string()))
+			}
+			sb.WriteString("\n")
+		}*/
+
+	for y := range BOARD_DIM {
 		sb.WriteString(fmt.Sprint(b.RowTotals[y]))
-		for _, cell := range col {
-			//sb.WriteString(fmt.Sprintf("(%d,%d) ", x, y))
+		for x := range BOARD_DIM {
+			cell := address(x, y, &b.Cells)
 			sb.WriteString(fmt.Sprint(cell.string()))
 		}
 		sb.WriteString("\n")
@@ -112,20 +125,21 @@ func (b Board) Solve() (*Board, error) {
 	// setting up the board
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
-			c := b.Cells[y][x]
+			c := address(x, y, &b.Cells)
+			//c := b.Cells[y][x]
 			constname := fmt.Sprintf("cell_%d_%d", x, y)
 			var sym z3.Int
-			switch c {
+			switch *c {
 			case Unknown:
 				sym = b.ctx.IntConst(constname)
 				space_or_wall := sym.Eq(b.intToConst(int(Wall))).Xor(sym.Eq(b.intToConst(int(Space))))
 				b.slv.Assert(space_or_wall)
 				log.Debugf("%d,%d %s", x, y, space_or_wall)
 			default:
-				sym = b.intToConst(int(c))
+				sym = b.intToConst(int(*c))
 			}
 
-			b.symbols[y][x] = sym
+			*address(x, y, &b.symbols) = sym
 			log.Debugf("created symbol %s", sym)
 		}
 	}
@@ -177,15 +191,16 @@ func (b Board) Solve() (*Board, error) {
 		return nil, err
 	}
 	m := b.slv.Model()
-	fmt.Println(m)
+	log.Debug(m)
 	nb := NewBoard(fmt.Sprintf("%s (solved)", b.Name))
 	nb.SetColTotals(b.ColTotals)
 	nb.SetRowTotals(b.RowTotals)
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
-			v := m.Eval(b.symbols[y][x], true).(z3.Int)
+			v := m.Eval(*address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
-			nb.Cells[y][x] = Cell(val)
+			*address(x, y, &nb.Cells) = Cell(val)
+			//nb.Cells[y][x] = Cell(val)
 		}
 	}
 
@@ -207,4 +222,11 @@ func (b Board) intToConst(c int) z3.Int {
 		log.Fatalf("Board %s does not have configured context or solver", b.Name)
 	}
 	return b.ctx.FromInt(int64(c), b.ctx.IntSort()).(z3.Int)
+}
+
+func address[T Cell | z3.Int](x int, y int, arr *[BOARD_DIM][BOARD_DIM]T) *T {
+	if x > BOARD_DIM || y > BOARD_DIM || x < BOARD_MIN || y < BOARD_MIN {
+		log.Fatalf("(%d,%d) is out of bounds", x, y)
+	}
+	return &arr[y][x]
 }
