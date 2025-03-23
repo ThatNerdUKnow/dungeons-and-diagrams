@@ -56,6 +56,7 @@ func (b *Board) checkcols() {
 	for x := range BOARD_DIM {
 		constname := fmt.Sprintf("col_%d_sum_%d", x, b.ColTotals[x])
 		sum := b.ctx.IntConst(constname)
+		b.slv.Assert(sum.Eq(b.intToConst(0)))
 		for y := range BOARD_DIM {
 			cond := address(x, y, &b.symbols).Eq(b.intToConst(int(Wall)))
 			//cond := b.symbols[y][x].Eq(b.intToConst(int(Wall)))
