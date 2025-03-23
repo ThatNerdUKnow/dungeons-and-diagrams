@@ -62,7 +62,7 @@ func (b *Board) checkcols() {
 			AddBoolToInt(&sum, &cond)
 		}
 		//assertion_const := b.ctx.BoolConst(fmt.Sprintf("%s-satisfied", constname))
-		assertion := sum.Eq(b.intToConst(1))
+		assertion := sum.Eq(b.intToConst(b.ColTotals[x]))
 		log.Debug(assertion)
 		b.slv.Assert(assertion)
 	}
@@ -210,7 +210,8 @@ func (b Board) Solve() (*Board, error) {
 func AddBoolToInt(i *z3.Int, b *z3.Bool) {
 	//log.Debugf("Adding %s to %s", i, b)
 	c := i.Context()
-
+	//bi := b.IfThenElse(i.Add(c.FromInt(1, c.IntSort()).(z3.Int)), i)
+	//*i = bi.(z3.Int)
 	bi := b.IfThenElse(c.FromInt(1, c.IntSort()), c.FromInt(0, c.IntSort()))
 	tmp := i.Add(bi.(z3.Int))
 	*i = tmp
