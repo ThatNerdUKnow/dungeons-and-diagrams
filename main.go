@@ -3,42 +3,22 @@ package main
 import (
 	"dungeons-and-diagrams/board"
 	"fmt"
-	"math/rand"
 
-	"github.com/aclements/go-z3/z3"
 	"github.com/charmbracelet/log"
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
-	fmt.Println("Hello, World")
-	cfg := z3.NewContextConfig()
-	ctx := z3.NewContext(cfg)
+	log.SetLevel(log.ErrorLevel)
 
-	// Create symbolic integer variables
-	a := ctx.IntConst("a")
-	b := ctx.IntConst("b")
-	c := ctx.FromInt(10, ctx.IntSort()).(z3.Int)
-	// Create a solver
-	slv := z3.NewSolver(ctx)
+	brd := board.NewBoard("Tenaxxus's Gullet")
+	brd.SetColTotals([8]int{4, 4, 2, 6, 2, 3, 4, 7})
+	brd.SetRowTotals([8]int{7, 3, 4, 1, 7, 1, 6, 3})
+	brd.SetCell(1, 2, board.Treasure)
+	brd.SetCell(5, 0, board.Monster)
+	brd.SetCell(0, 5, board.Monster)
+	brd.SetCell(2, 7, board.Monster)
+	brd.SetCell(7, 7, board.Monster)
 
-	// Add constraints
-	slv.Assert(a.Add(b).Eq(c))
-	sat, err := slv.Check()
-	if !sat {
-		fmt.Println("Not satisfiable: ", err)
-		return
-	}
-
-	brd := board.NewBoard("Foo")
-	perm := rand.Perm(8)
-	var colTotals [8]int
-	var rowTotals [8]int
-	copy(colTotals[:], perm)
-	perm = rand.Perm(8)
-	copy(rowTotals[:], perm)
-	brd.SetColTotals(colTotals)
-	brd.SetRowTotals(rowTotals)
 	fmt.Println(brd)
 
 	nb, err := brd.Solve()

@@ -55,31 +55,58 @@ func NewBoard(name string) Board {
 func (b *Board) checkcols() {
 	for x := range BOARD_DIM {
 		constname := fmt.Sprintf("col_%d_sum_%d", x, b.ColTotals[x])
-		sum := b.ctx.IntConst(constname)
-		b.slv.Assert(sum.Eq(b.intToConst(0)))
+		var cells [BOARD_DIM]z3.Int
 		for y := range BOARD_DIM {
-			cond := address(x, y, &b.symbols).Eq(b.intToConst(int(Wall)))
-			AddBoolToInt(&sum, &cond)
+			cells[y] = *address(x, y, &b.symbols)
 		}
-		assertion := sum.Eq(b.intToConst(b.ColTotals[x]))
-		log.Debug(assertion)
-		b.slv.Assert(assertion)
+		sum := b.countCells(cells[:], Wall, constname)
+		cond := sum.Eq(b.intToConst(b.ColTotals[x]))
+		log.Debug(cond)
+		b.slv.Assert(cond)
 	}
 }
 
 func (b *Board) checkrows() {
 	for y := range BOARD_DIM {
-		constname := fmt.Sprintf("row_%d_sum_%d", y, b.RowTotals[y])
-		sum := b.ctx.IntConst(constname)
-		b.slv.Assert(sum.Eq(b.intToConst(0)))
+		constname := fmt.Sprintf("row_%d_sum_%d", y, b.ColTotals[y])
+		var cells [BOARD_DIM]z3.Int
 		for x := range BOARD_DIM {
-			cond := address(x, y, &b.symbols).Eq(b.intToConst(int(Wall)))
-
-			AddBoolToInt(&sum, &cond)
+			cells[x] = *address(x, y, &b.symbols)
 		}
-		assertion := sum.Eq(b.intToConst(b.RowTotals[y]))
-		log.Debug(assertion)
-		b.slv.Assert(assertion)
+		sum := b.countCells(cells[:], Wall, constname)
+		cond := sum.Eq(b.intToConst(b.RowTotals[y]))
+		log.Debug(cond)
+		b.slv.Assert(cond)
+	}
+}
+
+func (b *Board) checkcells() {
+	for x := range BOARD_DIM {
+		for y := range BOARD_DIM {
+			switch *address(x, y, &b.Cells) {
+			case Monster:
+				{
+					neighbors := [4][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+					var neighbor_sym []z3.Int
+					maxSpaceNeighbors := b.intToConst(1)
+					for _, neighbor := range neighbors {
+						n_x := x + neighbor[0]
+						n_y := y + neighbor[1]
+						if b.inBounds(n_x, n_y) {
+							neighbor_sym = append(neighbor_sym, *address(n_x, n_y, &b.symbols))
+						} else {
+							log.Warnf("neighbor %d,%d is out of bounds. skipping", n_x, n_y)
+						}
+
+					}
+					constname := fmt.Sprintf("monster_%d_%d_hallway", x, y)
+					sum := b.countCells(neighbor_sym, Space, constname)
+					cond := sum.Eq(maxSpaceNeighbors)
+					log.Debug(cond)
+					b.slv.Assert(cond)
+				}
+			}
+		}
 	}
 }
 
@@ -97,7 +124,6 @@ func (b *Board) SetCell(x int, y int, cell Cell) error {
 	}
 
 	*address(x, y, &b.Cells) = cell
-	//b.Cells[y][x] = cell
 	return nil
 }
 
@@ -109,16 +135,6 @@ func (b Board) String() string {
 		sb.WriteString(fmt.Sprintf("%d ", sum))
 	}
 	sb.WriteString("\n")
-
-	/*
-		for y, col := range b.Cells {
-			sb.WriteString(fmt.Sprint(b.RowTotals[y]))
-			for _, cell := range col {
-				//sb.WriteString(fmt.Sprintf("(%d,%d) ", x, y))
-				sb.WriteString(fmt.Sprint(cell.string()))
-			}
-			sb.WriteString("\n")
-		}*/
 
 	for y := range BOARD_DIM {
 		sb.WriteString(fmt.Sprint(b.RowTotals[y]))
@@ -141,7 +157,6 @@ func (b Board) Solve() (*Board, error) {
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
 			c := address(x, y, &b.Cells)
-			//c := b.Cells[y][x]
 			constname := fmt.Sprintf("cell_%d_%d", x, y)
 			var sym z3.Int
 			switch *c {
@@ -201,6 +216,7 @@ func (b Board) Solve() (*Board, error) {
 
 	b.checkcols()
 	b.checkrows()
+	b.checkcells()
 	log.Info(b.slv)
 	sat, err := b.slv.Check()
 	if !sat {
@@ -216,7 +232,6 @@ func (b Board) Solve() (*Board, error) {
 			v := m.Eval(*address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
 			*address(x, y, &nb.Cells) = Cell(val)
-			//nb.Cells[y][x] = Cell(val)
 		}
 	}
 
@@ -224,10 +239,7 @@ func (b Board) Solve() (*Board, error) {
 }
 
 func AddBoolToInt(i *z3.Int, b *z3.Bool) {
-	//log.Debugf("Adding %s to %s", i, b)
 	c := i.Context()
-	//bi := b.IfThenElse(i.Add(c.FromInt(1, c.IntSort()).(z3.Int)), i)
-	//*i = bi.(z3.Int)
 	bi := b.IfThenElse(c.FromInt(1, c.IntSort()), c.FromInt(0, c.IntSort()))
 	tmp := i.Add(bi.(z3.Int))
 	*i = tmp
@@ -246,4 +258,19 @@ func address[T Cell | z3.Int](x int, y int, arr *[BOARD_DIM][BOARD_DIM]T) *T {
 		log.Fatalf("(%d,%d) is out of bounds", x, y)
 	}
 	return &arr[y][x]
+}
+
+func (b *Board) countCells(cells []z3.Int, t Cell, name string) z3.Int {
+	sum := b.ctx.IntConst(name)
+	b.slv.Assert(sum.Eq(b.intToConst(0)))
+	cmp := b.intToConst(int(t))
+	for _, cell := range cells {
+		pred := cell.Eq(cmp)
+		AddBoolToInt(&sum, &pred)
+	}
+	return sum
+}
+
+func (b *Board) inBounds(x int, y int) bool {
+	return (x < BOARD_DIM && x >= BOARD_MIN && y < BOARD_DIM && y >= BOARD_MIN)
 }
