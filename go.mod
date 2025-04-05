@@ -4,6 +4,7 @@ go 1.22.2
 
 require (
 	github.com/aclements/go-z3 v0.0.0-20220809013456-4675d5f90ca5 // indirect
+	github.com/adam-lavrik/go-imath v0.0.0-20210910152346-265a42a96f0b // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
 	github.com/charmbracelet/log v0.4.1 // indirect

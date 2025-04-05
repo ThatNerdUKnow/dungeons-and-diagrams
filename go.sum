@@ -1,5 +1,7 @@
 github.com/aclements/go-z3 v0.0.0-20220809013456-4675d5f90ca5 h1:A27FEXOK2zSHuCwXwmPIKfrHcT+caybRGb1kaW4KOBI=
 github.com/aclements/go-z3 v0.0.0-20220809013456-4675d5f90ca5/go.mod h1:Dcqk4DTCIWIVv0jiFnYg5nnTIOWZ3JgU/mYjb5puA1s=
+github.com/adam-lavrik/go-imath v0.0.0-20210910152346-265a42a96f0b h1:g9SuFmxM/WucQFKTMSP+irxyf5m0RiUJreBDhGI6jSA=
+github.com/adam-lavrik/go-imath v0.0.0-20210910152346-265a42a96f0b/go.mod h1:XjvqMUpGd3Xn9Jtzk/4GEBCSoBX0eB2RyriXgne0IdM=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/charmbracelet/lipgloss v1.0.0 h1:O7VkGDvqEdGi93X+DeqsQ7PKHDgtQfF8j8/O2qFMQNg=
