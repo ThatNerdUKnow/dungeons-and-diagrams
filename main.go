@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.ErrorLevel)
+	log.SetLevel(log.DebugLevel)
 
 	brd := board.NewBoard("Tenaxxus's Gullet")
 	brd.SetColTotals([8]int{4, 4, 2, 6, 2, 3, 4, 7})

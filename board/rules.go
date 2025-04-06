@@ -100,8 +100,71 @@ func (b *Board) checkSpace(x int, y int) {
 	b.slv.Assert(cellIsSpace.Implies(nonWallNeighbors.GE(minNonWallNeighbors)))
 }
 
-func checkTreasure() {
-	//room := append(chebyshevDistanceOffsets(1), chebyshevDistanceOffsets(0))
+func (b *Board) checkTreasure(x int, y int) {
+	room := append(chebyshevDistanceOffsets(1), chebyshevDistanceOffsets(0)...)
+	walls := chebyshevDistanceOffsets(2)
+	// find center of room
+	var cond *z3.Bool = nil
+RoomLoop:
+	for _, start := range room {
+		// s_x and s_y are a guess as to where the room center is
+		s_x := start[0] + x
+		s_y := start[1] + y
+		logger := log.With("room_center", [2]int{s_x, s_y})
+		logger.Debugf("Checking room %d,%d", s_x, s_y)
+		var room_sym []z3.Int
+		for _, off := range room {
+			// o_x and o_y are immediate neighbors of room center (0 <= chebyshev distance >=1 )
+			o_x := off[0] + s_x
+			o_y := off[1] + s_y
+			// o_r is a list of cells in the room to test. if any element in the room is out of bounds
+			// skip any further checks and move on to the next room
+
+			if b.inBounds(o_x, o_y) {
+				room_sym = append(room_sym, *address(o_x, o_y, &b.symbols))
+			} else {
+				logger.Debugf("%d,%d out of bounds. skipping treasure room check", o_x, o_y)
+				continue RoomLoop
+			}
+		}
+		logger = logger.With("room_symbols", room_sym)
+		logger.Debug("")
+		var wall_sym []z3.Int
+		for _, border := range walls {
+			w_x := s_x + border[0]
+			w_y := s_y + border[1]
+			if b.inBounds(w_x, w_y) {
+				wall_sym = append(wall_sym, *address(w_x, w_y, &b.symbols))
+			}
+		}
+		logger = logger.With("wall_symbols", wall_sym)
+		logger.Debug("")
+		entrance_pred := func(cmp z3.Int) z3.Bool {
+			return cmp.NE(b.intToConst(int(Wall)))
+		}
+		// neighbors of chebyshev distance 2 may only contain 1 neighbor that is not a wall
+		entrance := b.countCells(wall_sym, entrance_pred, fmt.Sprintf("room_%d_%d_entrance", s_x, s_y)).Eq(b.intToConst(1))
+
+		// each room must have exactly one treasure
+		treasure_pred := func(c z3.Int) z3.Bool {
+			return c.Eq(b.intToConst(int(Treasure)))
+		}
+		treasure_count := b.countCells(room_sym, treasure_pred, fmt.Sprintf("room_%d_%d_treasure_count", s_x, s_y)).Eq(b.intToConst(1))
+		// each room must contain exactly 8 spaces
+		space_pred := func(c z3.Int) z3.Bool {
+			return c.Eq(b.intToConst(int(Space)))
+		}
+		space_count := b.countCells(room_sym, space_pred, fmt.Sprintf("room_%d_%d_space_count", s_x, s_y)).Eq(b.intToConst(9 - 1))
+
+		inner_cond := entrance.And(treasure_count).And(space_count)
+		if cond == nil {
+			cond = &inner_cond
+		} else {
+			res := cond.Xor(inner_cond)
+			cond = &res
+		}
+	}
+	b.slv.Assert(*cond)
 }
 
 // Returns a list of offsets representing neighbors that are n chebyshev distance away

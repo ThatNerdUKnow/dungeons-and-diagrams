@@ -65,6 +65,8 @@ func (b *Board) checkcells() {
 				{
 					b.checkSpace(x, y)
 				}
+			case Treasure:
+				b.checkTreasure(x, y)
 			}
 		}
 	}
