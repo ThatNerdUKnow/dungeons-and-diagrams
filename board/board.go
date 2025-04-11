@@ -2,9 +2,10 @@ package board
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/aclements/go-z3/z3"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 	"github.com/charmbracelet/log"
 	"github.com/enescakir/emoji"
 )
@@ -91,23 +92,37 @@ func (b *Board) SetCell(x int, y int, cell Cell) error {
 }
 
 func (b Board) String() string {
-	var sb strings.Builder
-	sb.WriteString("\"" + b.Name + "\"\n ")
+	t := table.
+		New().
+		Border(lipgloss.DoubleBorder()).
+		BorderStyle(lipgloss.NewStyle().
+			Foreground(purple).Blink(true)).BorderColumn(false).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			if row == 0 && col > 0 {
+				return lipgloss.NewStyle().BorderBottom(true).Bold(true).Align(lipgloss.Right).Border(lipgloss.RoundedBorder(), false, true, true, false)
+			}
+			if col == 0 && row > 0 {
 
-	for _, sum := range b.ColTotals {
-		sb.WriteString(fmt.Sprintf("%d ", sum))
+			}
+			return lipgloss.NewStyle().Align(lipgloss.Right).Bold(true)
+		})
+
+	var header [BOARD_DIM + 1]string
+	header[0] = " "
+	for x := range BOARD_DIM {
+		header[x+1] = fmt.Sprint(b.ColTotals[x])
 	}
-	sb.WriteString("\n")
+	t.Row(header[:]...)
 
 	for y := range BOARD_DIM {
-		sb.WriteString(fmt.Sprint(b.RowTotals[y]))
+		var row [BOARD_DIM + 1]string
+		row[0] = fmt.Sprint(b.RowTotals[y])
 		for x := range BOARD_DIM {
-			cell := address(x, y, &b.Cells)
-			sb.WriteString(fmt.Sprint(cell.string()))
+			row[x+1] = (*address(x, y, &b.Cells)).string()
 		}
-		sb.WriteString("\n")
+		t.Row(row[:]...)
 	}
-	return sb.String()
+	return t.Render()
 }
 
 func (b Board) Solve() (*Board, error) {
