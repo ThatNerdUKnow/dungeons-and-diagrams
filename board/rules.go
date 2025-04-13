@@ -75,7 +75,9 @@ func (b *Board) checkMonster(x int, y int) {
 
 	}
 	constname := fmt.Sprintf("monster_%d_%d_deadend", x, y)
-	sum_wall := b.countCells(neighbor_sym, b.predNE(Wall, Monster), &constname)
+
+	predCompose(z3.Bool.Or, nil)
+	sum_wall := b.countCells(neighbor_sym, b.predNE(Wall), &constname)
 	cond := sum_wall.Eq(maxSpaceNeighbors)
 	//log.Debug(cond)
 	b.slv.Assert(cond)
