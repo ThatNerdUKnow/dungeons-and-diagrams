@@ -23,7 +23,6 @@ func (b Board) intToConst(c int) z3.Int {
 func (b *Board) countCells(cells []z3.Int, pred func(z3.Int) z3.Bool, name string) z3.Int {
 	sum := b.ctx.IntConst(name)
 	b.slv.Assert(sum.Eq(b.intToConst(0)))
-	//cmp := b.intToConst(int(t))
 	for _, cell := range cells {
 		p := pred(cell)
 		AddBoolToInt(&sum, &p)

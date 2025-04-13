@@ -19,11 +19,17 @@ func (b *Board) checkcols() {
 		for y := range BOARD_DIM {
 			cells[y] = *address(x, y, &b.symbols)
 		}
-		pred := func(cmp z3.Int) z3.Bool {
-			return cmp.Eq(b.intToConst(int(Wall)))
+		sum := b.countCells(cells[:], b.predEq(Wall), constname)
+		var cond z3.Bool
+		if b.ColTotals[x] != nil {
+			b.colSymbols[x] = b.ctx.IntConst(fmt.Sprintf("col_%d_sum_%d", x, *b.ColTotals[x]))
+			b.slv.Assert(b.colSymbols[x].Eq(b.intToConst(*b.ColTotals[x])))
+			cond = b.colSymbols[x].Sub(sum).Eq(b.intToConst(0))
+		} else {
+			b.colSymbols[x] = b.ctx.IntConst(fmt.Sprintf("col_%d_sum_unknown", x))
+			b.slv.Assert(b.colSymbols[x].GE(b.intToConst(0)).And(b.colSymbols[x].LE(b.intToConst(BOARD_DIM))))
+			cond = b.colSymbols[x].Sub(sum).Eq(b.intToConst(0))
 		}
-		sum := b.countCells(cells[:], pred, constname)
-		cond := sum.Eq(b.intToConst(b.ColTotals[x]))
 		log.Debug(cond)
 		b.slv.Assert(cond)
 	}
@@ -36,11 +42,8 @@ func (b *Board) checkrows() {
 		for x := range BOARD_DIM {
 			cells[x] = *address(x, y, &b.symbols)
 		}
-		pred := func(cmp z3.Int) z3.Bool {
-			return cmp.Eq(b.intToConst(int(Wall)))
-		}
-		sum := b.countCells(cells[:], pred, constname)
-		cond := sum.Eq(b.intToConst(b.RowTotals[y]))
+		sum := b.countCells(cells[:], b.predEq(Wall), constname)
+		cond := sum.Eq(b.intToConst(*b.RowTotals[y]))
 		log.Debug(cond)
 		b.slv.Assert(cond)
 	}
@@ -64,10 +67,7 @@ func (b *Board) checkMonster(x int, y int) {
 
 	}
 	constname := fmt.Sprintf("monster_%d_%d_deadend", x, y)
-	pred := func(cmp z3.Int) z3.Bool {
-		return cmp.NE(b.intToConst(int(Wall)))
-	}
-	sum := b.countCells(neighbor_sym, pred, constname)
+	sum := b.countCells(neighbor_sym, b.predNE(Wall), constname)
 	cond := sum.Eq(maxSpaceNeighbors)
 	log.Debug(cond)
 	b.slv.Assert(cond)
@@ -91,11 +91,8 @@ func (b *Board) checkSpace(x int, y int) {
 			neighbor_sym = append(neighbor_sym, *address(n_x, n_y, &b.symbols))
 		}
 	}
-	pred := func(cmp z3.Int) z3.Bool {
-		return cmp.NE(b.intToConst(int(Wall)))
-	}
 
-	nonWallNeighbors := b.countCells(neighbor_sym, pred, constname)
+	nonWallNeighbors := b.countCells(neighbor_sym, b.predNE(Wall), constname)
 
 	b.slv.Assert(cellIsSpace.Implies(nonWallNeighbors.GE(minNonWallNeighbors)))
 }
@@ -139,22 +136,13 @@ RoomLoop:
 		}
 		logger = logger.With("wall_symbols", wall_sym)
 		logger.Debug("")
-		entrance_pred := func(cmp z3.Int) z3.Bool {
-			return cmp.NE(b.intToConst(int(Wall)))
-		}
 		// neighbors of chebyshev distance 2 may only contain 1 neighbor that is not a wall
-		entrance := b.countCells(wall_sym, entrance_pred, fmt.Sprintf("room_%d_%d_entrance", s_x, s_y)).Eq(b.intToConst(1))
+		entrance := b.countCells(wall_sym, b.predNE(Wall), fmt.Sprintf("room_%d_%d_entrance", s_x, s_y)).Eq(b.intToConst(1))
 
 		// each room must have exactly one treasure
-		treasure_pred := func(c z3.Int) z3.Bool {
-			return c.Eq(b.intToConst(int(Treasure)))
-		}
-		treasure_count := b.countCells(room_sym, treasure_pred, fmt.Sprintf("room_%d_%d_treasure_count", s_x, s_y)).Eq(b.intToConst(1))
+		treasure_count := b.countCells(room_sym, b.predEq(Treasure), fmt.Sprintf("room_%d_%d_treasure_count", s_x, s_y)).Eq(b.intToConst(1))
 		// each room must contain exactly 8 spaces
-		space_pred := func(c z3.Int) z3.Bool {
-			return c.Eq(b.intToConst(int(Space)))
-		}
-		space_count := b.countCells(room_sym, space_pred, fmt.Sprintf("room_%d_%d_space_count", s_x, s_y)).Eq(b.intToConst(9 - 1))
+		space_count := b.countCells(room_sym, b.predEq(Space), fmt.Sprintf("room_%d_%d_space_count", s_x, s_y)).Eq(b.intToConst(9 - 1))
 
 		inner_cond := entrance.And(treasure_count).And(space_count)
 		if cond == nil {
