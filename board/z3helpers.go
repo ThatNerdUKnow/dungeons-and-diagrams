@@ -26,7 +26,6 @@ func (b *Board) countCells(cells []z3.Int, pred func(z3.Int) z3.Bool, name *stri
 		sum = b.ctx.IntConst(*name)
 		b.slv.Assert(sum.Eq(b.intToConst(0)))
 	} else {
-		log.Warn("Sum has no name")
 		sum = b.intToConst(0)
 	}
 

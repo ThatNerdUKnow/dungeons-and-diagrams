@@ -228,6 +228,8 @@ func (b Board) Solve() (*Board, error) {
 	for x := range BOARD_DIM {
 		val, _, _ := m.Eval(b.colSymbols[x], true).(z3.Int).AsInt64()
 		nb.SetColTotal(x)(int(val))
+		val, _, _ = m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
+		nb.SetRowTotal(x)(int(val))
 		for y := range BOARD_DIM {
 			v := m.Eval(*address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
