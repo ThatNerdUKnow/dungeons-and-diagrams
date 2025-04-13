@@ -3,11 +3,22 @@ package main
 import (
 	"dungeons-and-diagrams/board"
 	"fmt"
+	"os"
 
 	"github.com/charmbracelet/log"
 )
 
 func main() {
+
+	// Set log output to a file instead of stdout
+	f, err := os.Create("run.log")
+	if err != nil {
+		log.Fatal("could not create log file", "error", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	log.SetLevel(log.DebugLevel)
 	log.SetReportCaller(true)
 	brd := board.NewBoard("Tenaxxus's Gullet")
