@@ -77,8 +77,10 @@ func (b *Board) checkMonster(x int, y int) {
 	constname := fmt.Sprintf("monster_%d_%d_deadend", x, y)
 
 	predCompose(z3.Bool.Or, nil)
-	sum_wall := b.countCells(neighbor_sym, b.predNE(Wall), &constname)
-	cond := sum_wall.Eq(maxSpaceNeighbors)
+	//sum_wall := b.countCells(neighbor_sym, b.predNE(Wall), &constname)
+	sum_wall := b.countCells(neighbor_sym, predCompose(z3.Bool.Or, b.predEq(Space), b.predEq(Treasure)), &constname)
+	sum_monster := b.countCells(neighbor_sym, b.predEq(Monster), nil)
+	cond := sum_wall.Eq(maxSpaceNeighbors).And(sum_monster.Eq(b.intToConst(0)))
 	//log.Debug(cond)
 	b.slv.Assert(cond)
 }
