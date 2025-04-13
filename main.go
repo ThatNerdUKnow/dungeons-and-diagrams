@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.WarnLevel)
-
+	log.SetLevel(log.DebugLevel)
+	log.SetReportCaller(true)
 	brd := board.NewBoard("Tenaxxus's Gullet")
 	brd.SetColTotals([8]int{4, 4, 2, 6, 2, 3, 4, 7})
 	brd.SetRowTotals([8]int{7, 3, 4, 1, 7, 1, 6, 3})
@@ -23,7 +23,7 @@ func main() {
 
 	nb, err := brd.Solve()
 	if nb == nil {
-		log.Errorf("Could not solve board. %s", err)
+		log.Errorf("Could not solve board. %v", err)
 	}
 	fmt.Println(nb)
 
@@ -41,7 +41,7 @@ func main() {
 
 	nb, err = brd.Solve()
 	if nb == nil {
-		log.Errorf("Could not solve board. %s", err)
+		log.Errorf("Could not solve board. %v", err)
 	}
 	fmt.Println(nb)
 
@@ -51,7 +51,7 @@ func main() {
 
 	nb, err = brd.Solve()
 	if nb == nil {
-		log.Errorf("Could not solve board. %s", err)
+		log.Errorf("Could not solve board. %v", err)
 	}
 	fmt.Println(nb)
 }

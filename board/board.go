@@ -38,15 +38,15 @@ func (e Cell) string() string {
 }
 
 type Board struct {
-	Name        string
-	Cells       [BOARD_DIM][BOARD_DIM]Cell
-	ColTotals   [BOARD_DIM]*int
-	RowTotals   [BOARD_DIM]*int
-	colSymbols  [BOARD_DIM]z3.Int
-	_rowSymbols [BOARD_DIM]z3.Int
-	symbols     [BOARD_DIM][BOARD_DIM]z3.Int
-	ctx         *z3.Context
-	slv         *z3.Solver
+	Name       string
+	Cells      [BOARD_DIM][BOARD_DIM]Cell
+	ColTotals  [BOARD_DIM]*int
+	RowTotals  [BOARD_DIM]*int
+	colSymbols [BOARD_DIM]z3.Int
+	rowSymbols [BOARD_DIM]z3.Int
+	symbols    [BOARD_DIM][BOARD_DIM]z3.Int
+	ctx        *z3.Context
+	slv        *z3.Solver
 }
 
 func NewBoard(name string) Board {
