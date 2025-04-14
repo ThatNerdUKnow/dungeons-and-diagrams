@@ -2,9 +2,11 @@ package main
 
 import (
 	"dungeons-and-diagrams/board"
+	"dungeons-and-diagrams/editor"
 	"fmt"
 	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 )
 
@@ -65,4 +67,10 @@ func main() {
 		log.Errorf("Could not solve board. %v", err)
 	}
 	fmt.Println(nb)
+
+	p := tea.NewProgram(editor.New())
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
+	}
 }

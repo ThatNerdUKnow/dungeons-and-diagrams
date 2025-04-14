@@ -33,7 +33,7 @@ var EntTranslations = map[Cell]string{
 	Treasure: string(emoji.GemStone),
 }
 
-func (e Cell) string() string {
+func (e Cell) String() string {
 	return EntTranslations[e]
 }
 
@@ -62,7 +62,7 @@ func NewBoard(name string) Board {
 func (b *Board) checkcells() {
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
-			switch *address(x, y, &b.Cells) {
+			switch *Address(x, y, &b.Cells) {
 
 			case Monster:
 				{
@@ -116,12 +116,12 @@ func (b *Board) SetCell(x int, y int, cell Cell) error {
 		return fmt.Errorf("coordinates (%d,%d) are out of bounds", x, y)
 	}
 
-	*address(x, y, &b.Cells) = cell
+	*Address(x, y, &b.Cells) = cell
 	return nil
 }
 
 func (b *Board) GetCell(x int, y int) Cell {
-	return *address(x, y, &b.Cells)
+	return *Address(x, y, &b.Cells)
 }
 
 func (b Board) String() string {
@@ -161,7 +161,7 @@ func (b Board) String() string {
 			row[0] = "*"
 		}
 		for x := range BOARD_DIM {
-			row[x+1] = (*address(x, y, &b.Cells)).string()
+			row[x+1] = fmt.Sprint(*Address(x, y, &b.Cells))
 		}
 		t.Row(row[:]...)
 	}
@@ -182,7 +182,7 @@ func (b *Board) build() {
 	// setting up the board
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
-			c := address(x, y, &b.Cells)
+			c := Address(x, y, &b.Cells)
 			constname := fmt.Sprintf("cell_%d_%d", x, y)
 			var sym z3.Int
 			switch *c {
@@ -194,7 +194,7 @@ func (b *Board) build() {
 			default:
 				sym = b.intToConst(int(*c))
 			}
-			*address(x, y, &b.symbols) = sym
+			*Address(x, y, &b.symbols) = sym
 			log.Debugf("created symbol %s", sym)
 		}
 	}
@@ -231,16 +231,16 @@ func (b Board) Solve() (*Board, error) {
 		val, _, _ = m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
 		nb.SetRowTotal(x)(int(val))
 		for y := range BOARD_DIM {
-			v := m.Eval(*address(x, y, &b.symbols), true).(z3.Int)
+			v := m.Eval(*Address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
-			*address(x, y, &nb.Cells) = Cell(val)
+			*Address(x, y, &nb.Cells) = Cell(val)
 		}
 	}
 
 	return &nb, nil
 }
 
-func address[T Cell | z3.Int](x int, y int, arr *[BOARD_DIM][BOARD_DIM]T) *T {
+func Address[T Cell | z3.Int](x int, y int, arr *[BOARD_DIM][BOARD_DIM]T) *T {
 	if x > BOARD_DIM || y > BOARD_DIM || x < BOARD_MIN || y < BOARD_MIN {
 		log.Fatalf("(%d,%d) is out of bounds", x, y)
 	}

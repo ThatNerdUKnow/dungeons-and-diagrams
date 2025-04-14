@@ -10,11 +10,19 @@ func NewCursor1D(max int) Cursor1D {
 }
 
 func (c *Cursor1D) Inc() {
-	c.i = (c.i + 1) % c.i_max
+	tmp := (c.i + 1) % c.i_max
+	if tmp < 0 {
+		tmp += c.i_max
+	}
+	c.i = tmp
 }
 
 func (c *Cursor1D) Dec() {
-	c.i = (c.i - 1) % c.i_max
+	tmp := (c.i - 1) % c.i_max
+	if tmp < 0 {
+		tmp += c.i_max
+	}
+	c.i = tmp
 }
 
 type Cursor2D struct {

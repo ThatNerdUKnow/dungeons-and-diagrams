@@ -16,9 +16,9 @@ func (b *Board) checkline(i int, isCol bool, line_sym *z3.Int, line_total *int) 
 	var cells [BOARD_DIM]z3.Int
 	for j := range BOARD_DIM {
 		if isCol {
-			cells[j] = *address(i, j, &b.symbols)
+			cells[j] = *Address(i, j, &b.symbols)
 		} else {
-			cells[j] = *address(j, i, &b.symbols)
+			cells[j] = *Address(j, i, &b.symbols)
 		}
 	}
 	// symbol representing the number of walls in this line
@@ -59,7 +59,7 @@ func (b *Board) checkrows() {
 
 // Monster must be surrounded by at least 3 walls (or edge of map)
 func (b *Board) checkMonster(x int, y int) {
-	if *address(x, y, &b.Cells) != Monster {
+	if *Address(x, y, &b.Cells) != Monster {
 		log.Fatalf("%d,%d is not a monster", x, y)
 	}
 	var neighbor_sym []z3.Int
@@ -68,7 +68,7 @@ func (b *Board) checkMonster(x int, y int) {
 		n_x := x + neighbor[0]
 		n_y := y + neighbor[1]
 		if b.inBounds(n_x, n_y) {
-			neighbor_sym = append(neighbor_sym, *address(n_x, n_y, &b.symbols))
+			neighbor_sym = append(neighbor_sym, *Address(n_x, n_y, &b.symbols))
 		} else {
 			log.With("origin", [2]int{x, y}, "neighbor", [2]int{n_x, n_y}).Warn("skipping out of bounds neighbor")
 		}
@@ -87,20 +87,20 @@ func (b *Board) checkMonster(x int, y int) {
 
 // space cells must have at least 2 neighbors that are NOT walls
 func (b *Board) checkSpace(x int, y int) {
-	cell := *address(x, y, &b.Cells)
+	cell := *Address(x, y, &b.Cells)
 	if cell != Space && cell != Unknown {
 		log.Fatalf("%d,%d is not a monster", x, y)
 	}
 	constname := fmt.Sprintf("space_%d_%d_hallway", x, y)
 	var neighbor_sym []z3.Int
 	minNonWallNeighbors := b.intToConst(2)
-	sym := *address(x, y, &b.symbols)
+	sym := *Address(x, y, &b.symbols)
 	cellIsSpace := sym.Eq(b.intToConst(int(Space)))
 	for _, neighbor := range adjacent {
 		n_x := x + neighbor[0]
 		n_y := y + neighbor[1]
 		if b.inBounds(n_x, n_y) {
-			neighbor_sym = append(neighbor_sym, *address(n_x, n_y, &b.symbols))
+			neighbor_sym = append(neighbor_sym, *Address(n_x, n_y, &b.symbols))
 		}
 	}
 
@@ -130,7 +130,7 @@ RoomLoop:
 			// skip any further checks and move on to the next room
 
 			if b.inBounds(o_x, o_y) {
-				room_sym = append(room_sym, *address(o_x, o_y, &b.symbols))
+				room_sym = append(room_sym, *Address(o_x, o_y, &b.symbols))
 			} else {
 				logger.Debugf("%d,%d out of bounds. skipping treasure room check", o_x, o_y)
 				continue RoomLoop
@@ -143,7 +143,7 @@ RoomLoop:
 			w_x := s_x + border[0]
 			w_y := s_y + border[1]
 			if b.inBounds(w_x, w_y) {
-				wall_sym = append(wall_sym, *address(w_x, w_y, &b.symbols))
+				wall_sym = append(wall_sym, *Address(w_x, w_y, &b.symbols))
 			}
 		}
 		logger = logger.With("wall_symbols", wall_sym)
