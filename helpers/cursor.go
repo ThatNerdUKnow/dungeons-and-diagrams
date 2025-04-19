@@ -34,6 +34,10 @@ func NewCursor2D(x_max int, y_max int) Cursor2D {
 	return Cursor2D{X: NewCursor1D(x_max), Y: NewCursor1D(y_max)}
 }
 
-func (c Cursor2D) Coords() [2]int {
-	return [2]int{int(c.X.i), int(c.Y.i)}
+func (c Cursor2D) Coords() (int, int) {
+	return c.CoordsOffset(0, 0)
+}
+
+func (c Cursor2D) CoordsOffset(x int, y int) (int, int) {
+	return int(c.X.i) + x, c.Y.i + y
 }

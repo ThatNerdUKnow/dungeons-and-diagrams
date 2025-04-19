@@ -1,12 +1,14 @@
 module dungeons-and-diagrams
 
-go 1.22.2
+go 1.23.0
+
+toolchain go1.24.2
 
 require (
 	github.com/aclements/go-z3 v0.0.0-20220809013456-4675d5f90ca5 // indirect
 	github.com/adam-lavrik/go-imath v0.0.0-20210910152346-265a42a96f0b // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/bubbles v0.20.0 // indirect
+	github.com/charmbracelet/bubbles v0.21.0 // indirect
 	github.com/charmbracelet/bubbletea v1.3.4 // indirect
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect
 	github.com/charmbracelet/lipgloss v1.1.0 // indirect
