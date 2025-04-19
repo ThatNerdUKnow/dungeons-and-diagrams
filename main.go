@@ -1,7 +1,7 @@
 package main
 
 import (
-	"dungeons-and-diagrams/editor"
+	"dungeons-and-diagrams/model"
 	"fmt"
 	"os"
 
@@ -21,10 +21,10 @@ func main() {
 
 	log.SetOutput(f)
 
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 	log.SetReportCaller(true)
 
-	p := tea.NewProgram(editor.New())
+	p := tea.NewProgram(model.New())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 		fmt.Printf("%v", err)

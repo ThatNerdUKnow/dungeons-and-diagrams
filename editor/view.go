@@ -32,7 +32,6 @@ func (m Model) View() string {
 		}
 		return style
 	})
-	//m.UpdateTable()
 	tr := m.table.Render()
 	h := m.help.View(m.keymap)
 	w := lipgloss.Width(tr)

@@ -9,6 +9,8 @@ import (
 	"github.com/charmbracelet/log"
 )
 
+type Solved struct{ board.Board }
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
@@ -72,9 +74,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keymap.Solve):
 			{
-				_, err := m.Solve()
-				if err != nil {
+				nb, err := m.Solve()
 
+				if nb != nil {
+					f := func() tea.Msg {
+						return Solved{Board: *nb}
+					}
+					log.Info("Sending solved update to model")
+					return m, f
+				} else {
+					log.Fatalf("Could not solve board %v", err)
 				}
 			}
 		}
