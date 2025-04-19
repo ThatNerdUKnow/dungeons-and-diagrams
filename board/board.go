@@ -111,7 +111,8 @@ func (b *Board) SetColTotals(totals [BOARD_DIM]int) {
 }
 
 func (b *Board) SetCell(x int, y int, cell Cell) error {
-
+	logger := log.With("x", x, "y", y)
+	logger.Infof("Setting cell to %s", cell)
 	if !b.inBounds(x, y) {
 		return fmt.Errorf("coordinates (%d,%d) are out of bounds", x, y)
 	}

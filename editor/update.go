@@ -2,34 +2,37 @@ package editor
 
 import (
 	"dungeons-and-diagrams/board"
+	"strconv"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 )
 
-type Build struct{}
-type Solve struct{}
-
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keymap.Up):
 			{
 				m.cursor.Y.Dec()
+				m.UpdateKeymap()
 			}
 		case key.Matches(msg, m.keymap.Down):
 			{
 				m.cursor.Y.Inc()
+				m.UpdateKeymap()
 			}
 		case key.Matches(msg, m.keymap.Left):
 			{
 				m.cursor.X.Dec()
+				m.UpdateKeymap()
 			}
 		case key.Matches(msg, m.keymap.Right):
 			{
 				m.cursor.X.Inc()
+				m.UpdateKeymap()
 			}
 		case key.Matches(msg, m.keymap.Quit):
 			{
@@ -41,7 +44,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keymap.Numeric):
 			{
-
+				i, err := strconv.Atoi(msg.String())
+				if err != nil {
+					log.Fatal(err)
+				}
+				m.SetHeader(i)
 			}
 		case key.Matches(msg, m.keymap.Help):
 			{
@@ -65,19 +72,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keymap.Solve):
 			{
+				_, err := m.Solve()
+				if err != nil {
 
+				}
 			}
 		}
-	case Build:
-		{
 
-		}
-	case Solve:
-		{
-			m.Solve()
-		}
 	}
-
 	return m, nil
 }
 
@@ -85,6 +87,7 @@ func (m *Model) SetCell(cell board.Cell) {
 	x, y := m.cursor.CoordsOffset(-1, -1)
 	// setcell will panic if x and y are out of bounds which is desired behavior
 	m.Board.SetCell(x, y, cell)
+	m.UpdateTable()
 }
 
 func (m *Model) SetHeader(i int) {
@@ -94,14 +97,17 @@ func (m *Model) SetHeader(i int) {
 	}
 
 	x, y := m.cursor.Coords()
-
+	logger = logger.With("x", x, "y", y)
 	if x == 0 && y == 0 {
-		logger.With("x", x, "y", y).Fatal("Cursor is not pointing at headers")
+		logger.Fatal("Cursor is not pointing at headers")
 	} else if x == 0 {
-		m.Board.SetRowTotal(y)(i)
+		logger.Info("Setting row total")
+		m.Board.SetRowTotal(y - 1)(i)
 	} else if y == 0 {
-		m.Board.SetColTotal(x)(i)
+		logger.Info("Setting column total")
+		m.Board.SetColTotal(x - 1)(i)
 	} else {
-		logger.With("x", x, "y", y).Fatal("Cursor is not pointing at headers")
+		logger.Fatal("Cursor is not pointing at headers")
 	}
+	m.UpdateTable()
 }

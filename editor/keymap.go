@@ -31,18 +31,18 @@ type KeyMap struct {
 }
 
 func NewKeyMap() KeyMap {
-	numbers := key.NewBinding(key.WithKeys(genNumbers()...), key.WithHelp("0-8", "Enter a number"), key.WithDisabled())
+	numbers := key.NewBinding(key.WithKeys(genNumbers()...), key.WithHelp("0-8", "Enter a number"))
 	up := key.NewBinding(key.WithKeys("up"), key.WithHelp("↑", "move up"))
 	down := key.NewBinding(key.WithKeys("down"), key.WithHelp("↓", "move down"))
 	left := key.NewBinding(key.WithKeys("left"), key.WithHelp("←", "move left"))
 	right := key.NewBinding(key.WithKeys("right"), key.WithHelp("→", "move right"))
-	space := key.NewBinding(key.WithKeys("1"), key.WithHelp("1", fmt.Sprintf("insert space (%s)", board.Space)))
-	wall := key.NewBinding(key.WithKeys("2"), key.WithHelp("2", fmt.Sprintf("insert wall (%s)", board.Wall)))
-	monster := key.NewBinding(key.WithKeys("3"), key.WithHelp("3", fmt.Sprintf("insert monster (%s)", board.Monster)))
-	treasure := key.NewBinding(key.WithKeys("4"), key.WithHelp("4", fmt.Sprintf("insert treasure (%s)", board.Treasure)))
+	space := key.NewBinding(key.WithKeys("1"), key.WithHelp("1", fmt.Sprintf("%s insert space", board.Space)))
+	wall := key.NewBinding(key.WithKeys("2"), key.WithHelp("2", fmt.Sprintf("%s insert wall", board.Wall)))
+	monster := key.NewBinding(key.WithKeys("3"), key.WithHelp("3", fmt.Sprintf("%s insert monster", board.Monster)))
+	treasure := key.NewBinding(key.WithKeys("4"), key.WithHelp("4", fmt.Sprintf("%s insert treasure", board.Treasure)))
 	quit := key.NewBinding(key.WithKeys("q", "esc", "ctrl+c"), key.WithHelp("q", "quit"))
 	solve := key.NewBinding(key.WithKeys("enter", "return"), key.WithHelp("↵", "solve the board"))
-	delete := key.NewBinding(key.WithKeys("backspace", "delete"), key.WithHelp("backspace/delete", "delete selected element"))
+	delete := key.NewBinding(key.WithKeys("backspace", "delete"), key.WithHelp("backspace", "delete selected element"))
 	help := key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help"))
 	return KeyMap{
 		Numeric:  numbers,
@@ -62,11 +62,8 @@ func NewKeyMap() KeyMap {
 }
 
 func genNumbers() []string {
-	var keys []string
-	for n := '0'; n <= '8'; n++ {
-		keys = append(keys, fmt.Sprint(n))
-	}
-	return keys
+
+	return []string{"0", "1", "2", "3", "4", "5", "6", "7", "8"}
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
@@ -77,8 +74,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{{k.Quit, k.Help}, {k.Up, k.Down, k.Left, k.Right}, {k.Numeric, k.Space, k.Wall, k.Monster, k.Treasure}, {k.Delete, k.Solve}}
 }
 
-func (m Model) UpdateKeymap() {
-
+func (m *Model) UpdateKeymap() {
 	x, y := m.cursor.Coords()
 	cursorTopLeft := x == 0 && y == 0
 
@@ -90,10 +86,27 @@ func (m Model) UpdateKeymap() {
 		cursorInBoard = true
 	}
 
+	//logger := log.With("cursorTopLeft", cursorTopLeft, "cursorInBoard", cursorInBoard, "x", x, "y", y)
 	m.keymap.Numeric.SetEnabled(!cursorInBoard && !cursorTopLeft)
 	m.keymap.Space.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Wall.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Monster.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Treasure.SetEnabled(cursorInBoard && !cursorTopLeft)
 
+	/*
+		if x == 0 {
+			if y == 1 {
+				m.keymap.Up.SetEnabled(false)
+				logger.Info("Disabling up binding")
+			} else if y == board.BOARD_DIM {
+				m.keymap.Down.SetEnabled(false)
+				logger.Info("Disabling down binding")
+			} else {
+				m.keymap.Up.SetEnabled(true)
+				m.keymap.Down.SetEnabled(true)
+				logger.Info("Enabling Up & Down binding")
+			}
+		} else if y == 0 {
+
+		}*/
 }

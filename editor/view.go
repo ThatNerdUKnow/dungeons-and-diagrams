@@ -16,8 +16,6 @@ var SelectedStyle = func(s lipgloss.Style) lipgloss.Style {
 }
 
 func (m Model) View() string {
-
-	m.table.ClearRows()
 	x, y := m.cursor.Coords()
 	cursor_coords := [2]int{x, y}
 	m.table.StyleFunc(func(row, col int) lipgloss.Style {
@@ -34,11 +32,10 @@ func (m Model) View() string {
 		}
 		return style
 	})
-
-	m.UpdateTable()
-
+	//m.UpdateTable()
 	tr := m.table.Render()
+	h := m.help.View(m.keymap)
 	w := lipgloss.Width(tr)
 	title := HeaderStyle.Width(w).Render(m.Name)
-	return lipgloss.JoinVertical(lipgloss.Center, title, tr)
+	return lipgloss.JoinVertical(lipgloss.Left, title, tr, h)
 }

@@ -3,10 +3,14 @@ package editor
 import (
 	"dungeons-and-diagrams/board"
 	"fmt"
+
+	"github.com/charmbracelet/log"
 )
 
 // Update table rows to reflect board state
 func (m *Model) UpdateTable() {
+	log.Info("Updating table")
+	m.table.ClearRows()
 	var header [board.BOARD_DIM + 1]string
 	header[0] = " "
 	for x := range board.BOARD_DIM {

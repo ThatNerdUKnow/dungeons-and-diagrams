@@ -24,7 +24,14 @@ func New() Model {
 	m := NewKeyMap()
 	h := help.New()
 
-	return Model{Board: b, cursor: c, table: t, keymap: m, help: h}
+	keystyle := keyStyle
+	h.Styles.FullKey = keystyle
+	h.Styles.ShortKey = keystyle
+	model := Model{Board: b, cursor: c, table: t, keymap: m, help: h}
+	model.UpdateTable()
+	model.cursor.X.Inc()
+	model.cursor.Y.Inc()
+	return model
 }
 
 func (m Model) Init() tea.Cmd {
