@@ -130,16 +130,19 @@ func (m *Model) SetHeader(i *int) {
 	m.UpdateKeymap()
 }
 
+// Is the cursor currently pointing inside the board
 func (m Model) InBoard() bool {
 	x, y := m.cursor.Coords()
 	return x > 0 && y > 0
 }
 
+// is the cursor at 0,0
 func (m Model) InCorner() bool {
 	x, y := m.cursor.Coords()
 	return x == 0 && y == 0
 }
 
+// is the cursor pointing at either row or column totals
 func (m Model) InHeaders() bool {
 	return !m.InBoard() && !m.InCorner()
 }

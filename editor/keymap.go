@@ -76,17 +76,10 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 func (m *Model) UpdateKeymap() {
-	x, y := m.cursor.Coords()
-	cursorTopLeft := x == 0 && y == 0
-	cursorTopLeft = m.InCorner()
+	cursorTopLeft := m.InCorner()
 
 	// true: cursor is inside the board cells - false: cursor is in the header section
 	var cursorInBoard bool
-	if x == 0 || y == 0 {
-		cursorInBoard = false
-	} else {
-		cursorInBoard = true
-	}
 
 	cursorInBoard = m.InBoard()
 
