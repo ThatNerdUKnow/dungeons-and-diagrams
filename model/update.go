@@ -23,6 +23,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			sm := solved.New(msg.Board)
 			m.solved = &sm
 		}
+	case solved.ReturnToEditor:
+		{
+			m.mode = editmode
+		}
 	}
 	return m, tea.Batch(cmd, nil)
 }

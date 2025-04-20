@@ -169,7 +169,7 @@ func (b Board) String() string {
 	return t.Render()
 }
 
-func (b *Board) build() {
+func (b *Board) Build() {
 	if b.ctx == nil {
 		cfg := z3.NewContextConfig()
 		b.ctx = z3.NewContext(cfg)
@@ -206,19 +206,20 @@ func (b *Board) build() {
 }
 
 // Check if current constraints are solvable
-func (b Board) check() (bool, error) {
+func (b Board) Check() (bool, error) {
 	sat, err := b.slv.Check()
 	if err != nil {
 		log.Error(err)
 	}
+	log.With("sat", sat).Debug("")
 	return sat, err
 }
 
 func (b Board) Solve() (*Board, error) {
 	log.Infof("solving %s", b.Name)
-	b.build()
+	b.Build()
 
-	sat, err := b.check()
+	sat, err := b.Check()
 	if !sat {
 		return nil, err
 	}

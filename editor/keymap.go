@@ -3,6 +3,7 @@ package editor
 import (
 	"dungeons-and-diagrams/board"
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/bubbles/key"
 )
@@ -92,21 +93,12 @@ func (m *Model) UpdateKeymap() {
 	m.keymap.Wall.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Monster.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Treasure.SetEnabled(cursorInBoard && !cursorTopLeft)
+	m.keymap.Delete.SetEnabled(!cursorTopLeft)
 
-	/*
-		if x == 0 {
-			if y == 1 {
-				m.keymap.Up.SetEnabled(false)
-				logger.Info("Disabling up binding")
-			} else if y == board.BOARD_DIM {
-				m.keymap.Down.SetEnabled(false)
-				logger.Info("Disabling down binding")
-			} else {
-				m.keymap.Up.SetEnabled(true)
-				m.keymap.Down.SetEnabled(true)
-				logger.Info("Enabling Up & Down binding")
-			}
-		} else if y == 0 {
+	sat, err := m.Check()
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 
-		}*/
+	m.keymap.Solve.SetEnabled(sat)
 }

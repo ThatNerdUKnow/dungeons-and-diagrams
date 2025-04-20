@@ -2,12 +2,12 @@ package editor
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 var BaseBorder = lipgloss.NewStyle()
-var green = lipgloss.Color("#00FF00")
 var red = lipgloss.Color("#FF0000")
-var SatBorder = BaseBorder.Foreground(green)
+var SatBorder = BaseBorder.Foreground(purple)
 var UnsatBorder = BaseBorder.Foreground(red)
 var HeaderStyle = lipgloss.NewStyle().Bold(true).Align(lipgloss.Right)
 var CellStyle = lipgloss.NewStyle()
@@ -32,9 +32,24 @@ func (m Model) View() string {
 		}
 		return style
 	})
+
+	sat, err := m.Board.Check()
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	if sat {
+		m.table.BorderStyle(SatBorder)
+	} else {
+		m.table.BorderStyle(UnsatBorder)
+	}
+
 	tr := m.table.Render()
 	h := m.help.View(m.keymap)
 	w := lipgloss.Width(tr)
-	title := HeaderStyle.Width(w).Render(m.Name)
-	return lipgloss.JoinVertical(lipgloss.Left, title, tr, h)
+	boardTitle := HeaderStyle.Width(w).Render(m.Name)
+	// saving this for my back pocket when I implement parsing for last call BBS level data
+	//editorTitle := figure.NewFigure("Dungeons & Diagrams", "cosmic", true)
+
+	return lipgloss.JoinVertical(lipgloss.Left, boardTitle, tr, h)
 }

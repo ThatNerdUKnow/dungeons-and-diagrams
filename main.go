@@ -21,7 +21,7 @@ func main() {
 
 	log.SetOutput(f)
 
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 	log.SetReportCaller(true)
 
 	p := tea.NewProgram(model.New())

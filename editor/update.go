@@ -96,7 +96,9 @@ func (m *Model) SetCell(cell board.Cell) {
 	x, y := m.cursor.CoordsOffset(-1, -1)
 	// setcell will panic if x and y are out of bounds which is desired behavior
 	m.Board.SetCell(x, y, cell)
+	m.Board.Build()
 	m.UpdateTable()
+	m.UpdateKeymap()
 }
 
 func (m *Model) SetHeader(i int) {
@@ -119,4 +121,6 @@ func (m *Model) SetHeader(i int) {
 		logger.Fatal("Cursor is not pointing at headers")
 	}
 	m.UpdateTable()
+	m.Board.Build()
+	m.UpdateKeymap()
 }

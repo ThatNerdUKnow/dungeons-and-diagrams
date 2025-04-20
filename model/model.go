@@ -18,6 +18,6 @@ type Model struct {
 
 func New() Model {
 	mode := editmode
-	editor := editor.New()
+	editor := editor.Default()
 	return Model{mode: mode, edit: editor}
 }

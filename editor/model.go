@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 )
 
@@ -17,13 +18,16 @@ type Model struct {
 	help   help.Model
 }
 
-func New() Model {
-	b := board.NewBoard("New Dungeon")
-	c := helpers.NewCursor2D(board.BOARD_DIM+1, board.BOARD_DIM+1)
-	t := table.New()
+func New(b board.Board) Model {
+	b.Build()
+
 	m := NewKeyMap()
 	h := help.New()
+	c := helpers.NewCursor2D(board.BOARD_DIM+1, board.BOARD_DIM+1)
+	t := table.New()
 
+	t.BorderColumn(false)
+	t.Border(lipgloss.DoubleBorder())
 	keystyle := keyStyle
 	h.Styles.FullKey = keystyle
 	h.Styles.ShortKey = keystyle
@@ -32,6 +36,30 @@ func New() Model {
 	model.cursor.X.Inc()
 	model.cursor.Y.Inc()
 	return model
+}
+
+func Default() Model {
+	b := board.NewBoard("")
+	return New(b)
+	/*
+		b.Build()
+		c := helpers.NewCursor2D(board.BOARD_DIM+1, board.BOARD_DIM+1)
+		t := table.New()
+
+		t.Border(lipgloss.DoubleBorder())
+		t.BorderColumn(false)
+
+		m := NewKeyMap()
+		h := help.New()
+
+		keystyle := keyStyle
+		h.Styles.FullKey = keystyle
+		h.Styles.ShortKey = keystyle
+		model := Model{Board: b, cursor: c, table: t, keymap: m, help: h}
+		model.UpdateTable()
+		model.cursor.X.Inc()
+		model.cursor.Y.Inc()
+		return model*/
 }
 
 func (m Model) Init() tea.Cmd {
