@@ -3,6 +3,7 @@ package editor
 import (
 	"dungeons-and-diagrams/board"
 	"dungeons-and-diagrams/helpers"
+	"dungeons-and-diagrams/style"
 
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,7 +29,7 @@ func New(b board.Board) Model {
 
 	t.BorderColumn(false)
 	t.Border(lipgloss.DoubleBorder())
-	keystyle := keyStyle
+	keystyle := style.KeyStyle
 	h.Styles.FullKey = keystyle
 	h.Styles.ShortKey = keystyle
 	model := Model{Board: b, cursor: c, table: t, keymap: m, help: h}
@@ -41,25 +42,6 @@ func New(b board.Board) Model {
 func Default() Model {
 	b := board.NewBoard("")
 	return New(b)
-	/*
-		b.Build()
-		c := helpers.NewCursor2D(board.BOARD_DIM+1, board.BOARD_DIM+1)
-		t := table.New()
-
-		t.Border(lipgloss.DoubleBorder())
-		t.BorderColumn(false)
-
-		m := NewKeyMap()
-		h := help.New()
-
-		keystyle := keyStyle
-		h.Styles.FullKey = keystyle
-		h.Styles.ShortKey = keystyle
-		model := Model{Board: b, cursor: c, table: t, keymap: m, help: h}
-		model.UpdateTable()
-		model.cursor.X.Inc()
-		model.cursor.Y.Inc()
-		return model*/
 }
 
 func (m Model) Init() tea.Cmd {

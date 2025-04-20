@@ -42,7 +42,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, m.keymap.Delete):
 			{
-
+				if m.InBoard() {
+					m.SetCell(board.Unknown)
+				} else if m.InHeaders() {
+					m.SetHeader(nil)
+				}
 			}
 		case key.Matches(msg, m.keymap.Numeric):
 			{
@@ -50,7 +54,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					log.Fatal(err)
 				}
-				m.SetHeader(i)
+				m.SetHeader(&i)
 			}
 		case key.Matches(msg, m.keymap.Help):
 			{
@@ -101,26 +105,41 @@ func (m *Model) SetCell(cell board.Cell) {
 	m.UpdateKeymap()
 }
 
-func (m *Model) SetHeader(i int) {
+func (m *Model) SetHeader(i *int) {
 	logger := log.With("i", i)
-	if i < 0 || i > 8 {
-		logger.Fatal("invalid header value. Appropriate range is 0-8")
+	if i != nil {
+		if *i < 0 || *i > 8 {
+			logger.Fatal("invalid header value. Appropriate range is 0-8")
+		}
 	}
 
 	x, y := m.cursor.Coords()
 	logger = logger.With("x", x, "y", y)
-	if x == 0 && y == 0 {
+	if !m.InHeaders() {
 		logger.Fatal("Cursor is not pointing at headers")
-	} else if x == 0 {
+	}
+	if x == 0 {
 		logger.Info("Setting row total")
 		m.Board.SetRowTotal(y - 1)(i)
 	} else if y == 0 {
 		logger.Info("Setting column total")
 		m.Board.SetColTotal(x - 1)(i)
-	} else {
-		logger.Fatal("Cursor is not pointing at headers")
 	}
 	m.UpdateTable()
 	m.Board.Build()
 	m.UpdateKeymap()
+}
+
+func (m Model) InBoard() bool {
+	x, y := m.cursor.Coords()
+	return x > 0 && y > 0
+}
+
+func (m Model) InCorner() bool {
+	x, y := m.cursor.Coords()
+	return x == 0 && y == 0
+}
+
+func (m Model) InHeaders() bool {
+	return !m.InBoard() && !m.InCorner()
 }

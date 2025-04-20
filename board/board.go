@@ -1,6 +1,7 @@
 package board
 
 import (
+	"dungeons-and-diagrams/style"
 	"fmt"
 
 	"github.com/aclements/go-z3/z3"
@@ -81,32 +82,32 @@ func (b *Board) checkcells() {
 
 func (b *Board) SetRowTotals(totals [BOARD_DIM]int) {
 	for i, v := range totals {
-		b.SetRowTotal(i)(v)
+		b.SetRowTotal(i)(&v)
 	}
 }
 
-func setTotalValue(r int, arr *[BOARD_DIM]*int) func(int) {
+func setTotalValue(r int, arr *[BOARD_DIM]*int) func(*int) {
 
 	if arr == nil {
 		log.Fatal("Totals Array is nil")
 	}
-	return func(i int) {
+	return func(i *int) {
 		log.Debugf("Setting total %d to %d for array %v", r, i, arr)
-		arr[r] = &i
+		arr[r] = i
 	}
 }
 
-func (b *Board) SetRowTotal(r int) func(int) {
+func (b *Board) SetRowTotal(r int) func(*int) {
 	return setTotalValue(r, &b.RowTotals)
 }
 
-func (b *Board) SetColTotal(c int) func(int) {
+func (b *Board) SetColTotal(c int) func(*int) {
 	return setTotalValue(c, &b.ColTotals)
 }
 
 func (b *Board) SetColTotals(totals [BOARD_DIM]int) {
 	for i, v := range totals {
-		b.SetColTotal(i)(v)
+		b.SetColTotal(i)(&v)
 	}
 }
 
@@ -130,7 +131,7 @@ func (b Board) String() string {
 		New().
 		Border(lipgloss.DoubleBorder()).
 		BorderStyle(lipgloss.NewStyle().
-			Foreground(purple).Blink(true)).BorderColumn(false).
+			Foreground(style.Purple).Blink(true)).BorderColumn(false).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			if row == 0 && col > 0 {
 				return lipgloss.NewStyle().BorderBottom(true).Bold(true).Align(lipgloss.Right).Border(lipgloss.RoundedBorder(), false, true, true, false)
@@ -229,9 +230,11 @@ func (b Board) Solve() (*Board, error) {
 	nb.RowTotals = b.RowTotals
 	for x := range BOARD_DIM {
 		val, _, _ := m.Eval(b.colSymbols[x], true).(z3.Int).AsInt64()
-		nb.SetColTotal(x)(int(val))
+		valPtr := int(val)
+		nb.SetColTotal(x)(&valPtr)
 		val, _, _ = m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
-		nb.SetRowTotal(x)(int(val))
+		valPtr = int(val)
+		nb.SetRowTotal(x)(&valPtr)
 		for y := range BOARD_DIM {
 			v := m.Eval(*Address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
