@@ -106,11 +106,14 @@ func (m *Model) SetCell(cell board.Cell) {
 }
 
 func (m *Model) SetHeader(i *int) {
-	logger := log.With("i", i)
+	var logger *log.Logger
 	if i != nil {
+		logger = log.With("i", *i)
 		if *i < 0 || *i > 8 {
 			logger.Fatal("invalid header value. Appropriate range is 0-8")
 		}
+	} else {
+		logger = log.With("i", i)
 	}
 
 	x, y := m.cursor.Coords()
@@ -121,9 +124,11 @@ func (m *Model) SetHeader(i *int) {
 	if x == 0 {
 		logger.Info("Setting row total")
 		m.Board.SetRowTotal(y - 1)(i)
+		logger.Debug("Row Totals: %s", m.Board.RowTotals)
 	} else if y == 0 {
 		logger.Info("Setting column total")
 		m.Board.SetColTotal(x - 1)(i)
+		logger.Debug("Column Totals: %s", m.Board.ColTotals)
 	}
 	m.UpdateTable()
 	m.Board.Build()

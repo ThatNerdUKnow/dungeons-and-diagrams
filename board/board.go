@@ -197,7 +197,7 @@ func (b *Board) Build() {
 				sym = b.intToConst(int(*c))
 			}
 			*Address(x, y, &b.symbols) = sym
-			log.Debugf("created symbol %s", sym)
+			//log.Debugf("created symbol %s", sym)
 		}
 	}
 	b.checkcols()
@@ -241,7 +241,6 @@ func (b Board) Solve() (*Board, error) {
 			*Address(x, y, &nb.Cells) = Cell(val)
 		}
 	}
-
 	return &nb, nil
 }
 
