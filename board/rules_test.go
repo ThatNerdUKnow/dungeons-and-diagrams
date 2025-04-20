@@ -16,7 +16,7 @@ func TestChebyshevDistanceOffsets1(t *testing.T) {
 		results[neighbor] = true
 	}
 	t.Log(result)
-	for pair, _ := range expected {
+	for pair := range expected {
 		if !results[pair] {
 			t.Errorf("%d,%d not found in expected", pair[0], pair[1])
 		}
@@ -35,7 +35,7 @@ func TestChebyshevDistanceOffsets0(t *testing.T) {
 		results[neighbor] = true
 	}
 	t.Log(result)
-	for pair, _ := range expected {
+	for pair := range expected {
 		if !results[pair] {
 			t.Errorf("%d,%d not found in expected", pair[0], pair[1])
 		}
@@ -54,9 +54,44 @@ func TestChebyshevDistanceOffsets2(t *testing.T) {
 		results[neighbor] = true
 	}
 	t.Log(result)
-	for pair, _ := range expected {
+	for pair := range expected {
 		if !results[pair] {
 			t.Errorf("%d,%d not found in expected", pair[0], pair[1])
 		}
+	}
+}
+
+func TestMonsterFail(t *testing.T) {
+	b := NewBoard("TestMonsterFail")
+	b.SetCell(0, 0, Monster)
+	b.SetCell(0, 1, Monster)
+	t.Log(b)
+	nb, err := b.Solve()
+	t.Log(nb)
+	if nb != nil {
+		t.Errorf("Should not be satisfiable %v", err)
+	}
+}
+
+func TestMonster(t *testing.T) {
+	b := NewBoard("TestMonster")
+	b.SetCell(5, 5, Monster)
+	t.Log(b)
+	nb, err := b.Solve()
+	t.Log(nb)
+	if nb == nil {
+		t.Errorf("Should be satisfiable %v", err)
+	}
+}
+
+func TestTreasureFail(t *testing.T) {
+	b := NewBoard("TestTreasureFail")
+	b.SetCell(0, 0, Treasure)
+	b.SetCell(0, 1, Treasure)
+	t.Log(b)
+	nb, err := b.Solve()
+	t.Log(nb)
+	if nb != nil {
+		t.Errorf("Should not be satisfiable %v", err)
 	}
 }
