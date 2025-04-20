@@ -33,9 +33,12 @@ func New(b board.Board) Model {
 	h.Styles.FullKey = keystyle
 	h.Styles.ShortKey = keystyle
 	model := Model{Board: b, cursor: c, table: t, keymap: m, help: h}
-	model.UpdateTable()
+
 	model.cursor.X.Inc()
 	model.cursor.Y.Inc()
+	model.UpdateTable()
+	model.UpdateKeymap()
+
 	return model
 }
 
