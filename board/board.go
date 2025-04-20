@@ -1,7 +1,6 @@
 package board
 
 import (
-	"dungeons-and-diagrams/style"
 	"fmt"
 
 	"github.com/aclements/go-z3/z3"
@@ -71,7 +70,9 @@ func (b *Board) checkcells() {
 				}
 			case Space, Unknown:
 				{
-					b.checkSpace(x, y)
+					// current checkspace implementation is unsuitable for most puzzles
+					// only really need this if we're doing puzzle generation
+					//b.checkSpace(x, y)
 				}
 			case Treasure:
 				b.checkTreasure(x, y)
@@ -127,20 +128,9 @@ func (b *Board) GetCell(x int, y int) Cell {
 }
 
 func (b Board) String() string {
-	t := table.
-		New().
-		Border(lipgloss.DoubleBorder()).
-		BorderStyle(lipgloss.NewStyle().
-			Foreground(style.Purple).Blink(true)).BorderColumn(false).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 && col > 0 {
-				return lipgloss.NewStyle().BorderBottom(true).Bold(true).Align(lipgloss.Right).Border(lipgloss.RoundedBorder(), false, true, true, false)
-			}
-			if col == 0 && row > 0 {
+	t := table.New()
 
-			}
-			return lipgloss.NewStyle().Align(lipgloss.Right).Bold(true)
-		})
+	t.BorderColumn(false)
 
 	var header [BOARD_DIM + 1]string
 	header[0] = " "
@@ -167,7 +157,7 @@ func (b Board) String() string {
 		}
 		t.Row(row[:]...)
 	}
-	return t.Render()
+	return lipgloss.JoinVertical(lipgloss.Left, b.Name, t.Render())
 }
 
 func (b *Board) Build() {
@@ -229,18 +219,19 @@ func (b Board) Solve() (*Board, error) {
 	nb := NewBoard(fmt.Sprintf("%s (solved)", b.Name))
 	nb.RowTotals = b.RowTotals
 	for x := range BOARD_DIM {
-		val, _, _ := m.Eval(b.colSymbols[x], true).(z3.Int).AsInt64()
-		valPtr := int(val)
-		nb.SetColTotal(x)(&valPtr)
-		val, _, _ = m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
-		valPtr = int(val)
-		nb.SetRowTotal(x)(&valPtr)
+		colval, _, _ := m.Eval(b.colSymbols[x], true).(z3.Int).AsInt64()
+		colvalPtr := int(colval)
+		nb.SetColTotal(x)(&colvalPtr)
+		rowval, _, _ := m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
+		rowvalPtr := int(rowval)
+		nb.SetRowTotal(x)(&rowvalPtr)
 		for y := range BOARD_DIM {
 			v := m.Eval(*Address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
 			*Address(x, y, &nb.Cells) = Cell(val)
 		}
 	}
+	log.Debugf("Solved\n%s", nb)
 	return &nb, nil
 }
 

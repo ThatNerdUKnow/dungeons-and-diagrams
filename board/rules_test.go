@@ -10,7 +10,7 @@ func TestChebyshevDistanceOffsets1(t *testing.T) {
 	for _, neighbor := range expected_neighbors {
 		expected[neighbor] = true
 	}
-	result := chebyshevDistanceOffsets(1)
+	result := chebyshevDistanceNeighbors(1)
 	results := make(map[[2]int]bool)
 	for _, neighbor := range result {
 		results[neighbor] = true
@@ -29,7 +29,7 @@ func TestChebyshevDistanceOffsets0(t *testing.T) {
 	for _, neighbor := range expected_neighbors {
 		expected[neighbor] = true
 	}
-	result := chebyshevDistanceOffsets(0)
+	result := chebyshevDistanceNeighbors(0)
 	results := make(map[[2]int]bool)
 	for _, neighbor := range result {
 		results[neighbor] = true
@@ -48,7 +48,7 @@ func TestChebyshevDistanceOffsets2(t *testing.T) {
 	for _, neighbor := range expected_neighbors {
 		expected[neighbor] = true
 	}
-	result := chebyshevDistanceOffsets(2)
+	result := chebyshevDistanceNeighbors(2)
 	results := make(map[[2]int]bool)
 	for _, neighbor := range result {
 		results[neighbor] = true
@@ -94,4 +94,71 @@ func TestTreasureFail(t *testing.T) {
 	if nb != nil {
 		t.Errorf("Should not be satisfiable %v", err)
 	}
+}
+
+func TestColCountSymbolic(t *testing.T) {
+	b := NewBoard("TestColCountSymbolic")
+	b.Build()
+
+	b.SetCell(0, 0, Space)
+	b.SetCell(0, 1, Wall)
+	b.SetCell(0, 2, Wall)
+	b.SetCell(0, 3, Wall)
+	b.SetCell(0, 4, Wall)
+	b.SetCell(0, 5, Wall)
+	b.SetCell(0, 6, Space)
+	b.SetCell(0, 7, Space)
+	t.Log(b)
+	b2, _ := b.Solve()
+	if b2 == nil {
+		t.Fatal("Should be satisfiable")
+	}
+	t.Log(b2)
+	var sym []Cell
+	for i := 0; i < BOARD_DIM; i++ {
+		sym = append(sym, *Address(0, i, &b2.Cells))
+	}
+	if len(sym) != BOARD_DIM {
+		t.Error("Off by one")
+	}
+	total := CountCellsConcrete(sym, int(Wall))
+
+	b2ColTotal := b2.ColTotals[0]
+	if b2ColTotal == nil {
+		t.Fatal("col total should not be nil")
+	}
+	if total != *b2ColTotal {
+		t.Errorf("Total does not match (got %d, expected %d)", *b2ColTotal, total)
+	}
+
+}
+
+func TestColCountConcrete(t *testing.T) {
+	b := NewBoard("TestColCountConcrete")
+	b.Build()
+
+	targetTotal := 5
+	b.SetColTotal(0)(&targetTotal)
+	b2, _ := b.Solve()
+	if b2 == nil {
+		t.Fatal("Should be satisfiable")
+	}
+	t.Log(b2)
+	var sym []Cell
+	for i := 0; i < BOARD_DIM; i++ {
+		sym = append(sym, *Address(0, i, &b2.Cells))
+	}
+	if len(sym) != BOARD_DIM {
+		t.Error("Off by one")
+	}
+	total := CountCellsConcrete(sym, int(Wall))
+
+	b2ColTotal := b2.ColTotals[0]
+	if b2ColTotal == nil {
+		t.Fatal("col total should not be nil")
+	}
+	if total != *b2ColTotal {
+		t.Errorf("Total does not match (got %d, expected %d)", *b2ColTotal, total)
+	}
+
 }

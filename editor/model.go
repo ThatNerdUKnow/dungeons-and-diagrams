@@ -38,7 +38,7 @@ func New(b board.Board) Model {
 	model.cursor.Y.Inc()
 	model.UpdateTable()
 	model.UpdateKeymap()
-
+	model.help.ShowAll = true
 	return model
 }
 

@@ -35,10 +35,14 @@ func (b *Board) checkline(i int, isCol bool, line_sym *z3.Int, line_total *int) 
 	if line_total != nil {
 		// if our line total is concrete, line_sym[i] and wall_sum should be equal
 		*line_sym = b.ctx.IntConst(fmt.Sprintf("%s_%d_sum_%d", sym_prefix, i, *line_total))
-		b.slv.Assert(line_sym.Eq(b.intToConst(*line_total)))
+		cond := line_sym.Eq(b.intToConst(*line_total))
+		log.Debug(cond)
+		b.slv.Assert(cond)
 	} else {
 		*line_sym = b.ctx.IntConst(fmt.Sprintf("%s_%d_sum_unknown", sym_prefix, i))
-		b.slv.Assert(b.colSymbols[i].GE(b.intToConst(0)).And(b.colSymbols[i].LE(b.intToConst(BOARD_DIM))))
+		cond := b.colSymbols[i].GE(b.intToConst(0)).And(b.colSymbols[i].LE(b.intToConst(BOARD_DIM)))
+		log.Debug(cond)
+		b.slv.Assert(cond)
 	}
 	cond := line_sym.Eq(wall_sum)
 	log.Debug(cond)
@@ -105,13 +109,14 @@ func (b *Board) checkSpace(x int, y int) {
 	}
 
 	nonWallNeighbors := b.countCells(neighbor_sym, b.predNE(Wall), &constname)
-
-	b.slv.Assert(cellIsSpace.Implies(nonWallNeighbors.GE(minNonWallNeighbors)))
+	cond := cellIsSpace.Implies(nonWallNeighbors.GE(minNonWallNeighbors))
+	log.Debug(cond)
+	b.slv.Assert(cond)
 }
 
 func (b *Board) checkTreasure(x int, y int) {
-	room := append(chebyshevDistanceOffsets(1), chebyshevDistanceOffsets(0)...)
-	walls := chebyshevDistanceOffsets(2)
+	room := append(chebyshevDistanceNeighbors(1), chebyshevDistanceNeighbors(0)...)
+	walls := chebyshevDistanceNeighborsSansCorners(2)
 	// find center of room
 	var cond *z3.Bool = nil
 RoomLoop:
@@ -169,7 +174,7 @@ RoomLoop:
 }
 
 // Returns a list of offsets representing neighbors that are n chebyshev distance away
-func chebyshevDistanceOffsets(d int) [][2]int {
+func chebyshevDistanceNeighbors(d int) [][2]int {
 	var neighbors [][2]int
 	for x := -d; x <= d; x++ {
 		if ix.Abs(x) != d {
@@ -179,6 +184,23 @@ func chebyshevDistanceOffsets(d int) [][2]int {
 			for y := -d; y <= d; y++ {
 				neighbors = append(neighbors, [2]int{x, y})
 			}
+		}
+	}
+	return neighbors
+}
+
+func chebyshevDistanceNeighborsSansCorners(d int) [][2]int {
+	var neighbors [][2]int
+	cneighbors := chebyshevDistanceNeighbors(2)
+	for _, neighbor := range cneighbors {
+		x := ix.Abs(neighbor[0])
+		y := ix.Abs(neighbor[1])
+		if x == d && y == d {
+			log.Debug("Skipping neighbor %s", neighbor)
+
+		} else {
+			log.Debug("Appending neighbor %s", neighbor)
+			neighbors = append(neighbors, neighbor)
 		}
 	}
 	return neighbors
