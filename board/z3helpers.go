@@ -20,7 +20,23 @@ func (b Board) intToConst(c int) z3.Int {
 	return b.ctx.FromInt(int64(c), b.ctx.IntSort()).(z3.Int)
 }
 
-func (b *Board) countCells(cells []z3.Int, pred func(z3.Int) z3.Bool, name *string) z3.Int {
+// This function works fine if only one int symbol needs to be accounted for,
+// but isn't flexible enough to handle more dynamic constraints
+// however, i'm keeping this function with this signature in order to prevent an API break
+func (b *Board) countCells(cells []z3.Int, pred SymbolicPredicate, name *string) z3.Int {
+	return b.countCellsMany(cells, []SymbolicPredicate{pred}, name)
+}
+
+// Allows more flexibility in the conditions for counting cells. each predicate function may capture information
+// from its parent scope, which means that I can encode more complicated constraints in the predicates than I could otherwise
+func (b *Board) countCellsMany(cells []z3.Int, preds []SymbolicPredicate, name *string) z3.Int {
+	// if only one predicate is provided, apply the predicate to each cell
+	// otherwise it's expected that there is a distinct predicate function for each cell
+	// with 1:1 cardinality
+	if len(cells) != len(preds) && len(preds) != 1 {
+		log.Fatalf("predicate and cell count do not match")
+	}
+	singlePred := len(preds) == 1
 	var sum z3.Int
 	if name != nil {
 		sum = b.ctx.IntConst(*name)
@@ -29,7 +45,13 @@ func (b *Board) countCells(cells []z3.Int, pred func(z3.Int) z3.Bool, name *stri
 		sum = b.intToConst(0)
 	}
 
-	for _, cell := range cells {
+	for i, cell := range cells {
+		var pred SymbolicPredicate
+		if singlePred {
+			pred = preds[0]
+		} else {
+			pred = preds[i]
+		}
 		p := pred(cell)
 		AddBoolToInt(&sum, &p)
 	}
