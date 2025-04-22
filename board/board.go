@@ -38,15 +38,16 @@ func (e Cell) String() string {
 }
 
 type Board struct {
-	Name       string
-	Cells      [BOARD_DIM][BOARD_DIM]Cell
-	ColTotals  [BOARD_DIM]*int
-	RowTotals  [BOARD_DIM]*int
-	colSymbols [BOARD_DIM]z3.Int
-	rowSymbols [BOARD_DIM]z3.Int
-	symbols    [BOARD_DIM][BOARD_DIM]z3.Int
-	ctx        *z3.Context
-	slv        *z3.Solver
+	Name         string
+	Cells        [BOARD_DIM][BOARD_DIM]Cell
+	ColTotals    [BOARD_DIM]*int
+	RowTotals    [BOARD_DIM]*int
+	colSymbols   [BOARD_DIM]z3.Int
+	rowSymbols   [BOARD_DIM]z3.Int
+	symbols      [BOARD_DIM][BOARD_DIM]z3.Int
+	space_labels [BOARD_DIM][BOARD_DIM]z3.Int
+	ctx          *z3.Context
+	slv          *z3.Solver
 }
 
 func NewBoard(name string) Board {
@@ -72,7 +73,7 @@ func (b *Board) checkcells() {
 				{
 					// current checkspace implementation is unsuitable for most puzzles
 					// only really need this if we're doing puzzle generation
-					//b.checkSpace(x, y)
+					b.checkSpace(x, y)
 				}
 			case Treasure:
 				b.checkTreasure(x, y)
@@ -187,7 +188,10 @@ func (b *Board) Build() {
 				sym = b.intToConst(int(*c))
 			}
 			*Address(x, y, &b.symbols) = sym
-			//log.Debugf("created symbol %s", sym)
+
+			label_constname := fmt.Sprintf("cell_%d_%d_label", x, y)
+			label_sym := b.ctx.IntConst(label_constname)
+			*Address(x, y, &b.space_labels) = label_sym
 		}
 	}
 	b.checkcols()
