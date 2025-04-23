@@ -119,28 +119,6 @@ func (b *Board) checkSpace(x int, y int) {
 	// with a label (this cell's label) - 1
 	cond := b.predEq(Space)(cell).And(cell_label.NE(b.intToConst(0))).Implies(count.GE(b.intToConst(1)))
 	b.slv.Assert(cond)
-	/*
-		cell := *Address(x, y, &b.Cells)
-		if cell != Space && cell != Unknown {
-			log.Fatalf("%d,%d is not a monster", x, y)
-		}
-		constname := fmt.Sprintf("space_%d_%d_hallway", x, y)
-		var neighbor_sym []z3.Int
-		minNonWallNeighbors := b.intToConst(2)
-		sym := *Address(x, y, &b.symbols)
-		cellIsSpace := sym.Eq(b.intToConst(int(Space)))
-		for _, neighbor := range adjacent {
-			n_x := x + neighbor[0]
-			n_y := y + neighbor[1]
-			if b.inBounds(n_x, n_y) {
-				neighbor_sym = append(neighbor_sym, *Address(n_x, n_y, &b.symbols))
-			}
-		}
-
-		nonWallNeighbors := b.countCells(neighbor_sym, b.predNE(Wall), &constname)
-		cond := cellIsSpace.Implies(nonWallNeighbors.GE(minNonWallNeighbors))
-		log.Debug(cond)
-		b.slv.Assert(cond)*/
 }
 
 func (b *Board) checkTreasure(x int, y int) {
@@ -187,11 +165,14 @@ RoomLoop:
 		entrance := b.countCells(wall_sym, b.predNE(Wall), &constname).Eq(b.intToConst(1))
 
 		// each room must have exactly one treasure
+		constname = fmt.Sprintf("room_%d_%d_treasure", s_x, s_y)
 		treasure_count := b.countCells(room_sym, b.predEq(Treasure), &constname).Eq(b.intToConst(1))
 		// each room must contain exactly 8 spaces
+		constname = fmt.Sprintf("room_%d_%d_spaces", s_x, s_y)
 		space_count := b.countCells(room_sym, b.predEq(Space), &constname).Eq(b.intToConst(9 - 1))
 
 		inner_cond := entrance.And(treasure_count).And(space_count)
+
 		if cond == nil {
 			cond = &inner_cond
 		} else {
