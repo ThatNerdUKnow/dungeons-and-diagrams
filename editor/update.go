@@ -19,22 +19,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Up):
 			{
 				m.cursor.Y.Dec()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Down):
 			{
 				m.cursor.Y.Inc()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Left):
 			{
 				m.cursor.X.Dec()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Right):
 			{
 				m.cursor.X.Inc()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Quit):
 			{
@@ -102,15 +102,18 @@ func (m *Model) SetCell(cell board.Cell) {
 	m.Board.SetCell(x, y, cell)
 	m.Board.Build()
 	m.UpdateTable()
-	m.UpdateKeymap()
+	m.UpdateKeymap(true)
 }
 
 func (m *Model) SetHeader(i *int) {
-	logger := log.With("i", i)
+	var logger *log.Logger
 	if i != nil {
+		logger = log.With("i", *i)
 		if *i < 0 || *i > 8 {
 			logger.Fatal("invalid header value. Appropriate range is 0-8")
 		}
+	} else {
+		logger = log.With("i", i)
 	}
 
 	x, y := m.cursor.Coords()
@@ -121,13 +124,15 @@ func (m *Model) SetHeader(i *int) {
 	if x == 0 {
 		logger.Info("Setting row total")
 		m.Board.SetRowTotal(y - 1)(i)
+		logger.Debug("Row Totals: %s", m.Board.RowTotals)
 	} else if y == 0 {
 		logger.Info("Setting column total")
 		m.Board.SetColTotal(x - 1)(i)
+		logger.Debug("Column Totals: %s", m.Board.ColTotals)
 	}
 	m.UpdateTable()
 	m.Board.Build()
-	m.UpdateKeymap()
+	m.UpdateKeymap(true)
 }
 
 // Is the cursor currently pointing inside the board

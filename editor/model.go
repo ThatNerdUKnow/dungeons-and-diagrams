@@ -13,6 +13,7 @@ import (
 
 type Model struct {
 	board.Board
+	sat    bool
 	cursor helpers.Cursor2D
 	table  *table.Table
 	keymap KeyMap
@@ -21,6 +22,10 @@ type Model struct {
 
 func New(b board.Board) Model {
 	b.Build()
+	sat, err := b.Check()
+	if err != nil {
+		panic(err)
+	}
 
 	m := NewKeyMap()
 	h := help.New()
@@ -32,13 +37,13 @@ func New(b board.Board) Model {
 	keystyle := style.KeyStyle
 	h.Styles.FullKey = keystyle
 	h.Styles.ShortKey = keystyle
-	model := Model{Board: b, cursor: c, table: t, keymap: m, help: h}
+	model := Model{Board: b, cursor: c, table: t, keymap: m, help: h, sat: sat}
 
 	model.cursor.X.Inc()
 	model.cursor.Y.Inc()
 	model.UpdateTable()
-	model.UpdateKeymap()
-
+	model.UpdateKeymap(true)
+	model.help.ShowAll = true
 	return model
 }
 

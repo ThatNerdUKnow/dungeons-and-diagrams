@@ -35,10 +35,14 @@ func (b *Board) checkline(i int, isCol bool, line_sym *z3.Int, line_total *int) 
 	if line_total != nil {
 		// if our line total is concrete, line_sym[i] and wall_sum should be equal
 		*line_sym = b.ctx.IntConst(fmt.Sprintf("%s_%d_sum_%d", sym_prefix, i, *line_total))
-		b.slv.Assert(line_sym.Eq(b.intToConst(*line_total)))
+		cond := line_sym.Eq(b.intToConst(*line_total))
+		log.Debug(cond)
+		b.slv.Assert(cond)
 	} else {
 		*line_sym = b.ctx.IntConst(fmt.Sprintf("%s_%d_sum_unknown", sym_prefix, i))
-		b.slv.Assert(b.colSymbols[i].GE(b.intToConst(0)).And(b.colSymbols[i].LE(b.intToConst(BOARD_DIM))))
+		cond := b.colSymbols[i].GE(b.intToConst(0)).And(b.colSymbols[i].LE(b.intToConst(BOARD_DIM)))
+		log.Debug(cond)
+		b.slv.Assert(cond)
 	}
 	cond := line_sym.Eq(wall_sum)
 	log.Debug(cond)
@@ -87,31 +91,39 @@ func (b *Board) checkMonster(x int, y int) {
 
 // space cells must have at least 2 neighbors that are NOT walls
 func (b *Board) checkSpace(x int, y int) {
-	cell := *Address(x, y, &b.Cells)
-	if cell != Space && cell != Unknown {
-		log.Fatalf("%d,%d is not a monster", x, y)
-	}
-	constname := fmt.Sprintf("space_%d_%d_hallway", x, y)
-	var neighbor_sym []z3.Int
-	minNonWallNeighbors := b.intToConst(2)
-	sym := *Address(x, y, &b.symbols)
-	cellIsSpace := sym.Eq(b.intToConst(int(Space)))
+	// trying out a flood fill
+	cell := *Address(x, y, &b.symbols)
+	cell_label := *Address(x, y, &b.space_labels)
+	var neighbors []z3.Int
+	var preds []SymbolicPredicate
+	//var neighbors_labels []z3.Int
 	for _, neighbor := range adjacent {
-		n_x := x + neighbor[0]
-		n_y := y + neighbor[1]
-		if b.inBounds(n_x, n_y) {
-			neighbor_sym = append(neighbor_sym, *Address(n_x, n_y, &b.symbols))
+		nx := neighbor[0] + x
+		ny := neighbor[1] + y
+		if b.inBounds(nx, ny) {
+			neighbors = append(neighbors, *Address(nx, ny, &b.symbols))
+			nlabel := *Address(nx, ny, &b.space_labels)
+			// if neighbor is a space, then it must have a label one less than the current cell
+			f := func(i z3.Int) z3.Bool {
+				is_space := b.predEq(Space)(i)
+				expected_label := cell_label.Sub(b.intToConst(1))
+				nlabel_expected := nlabel.Eq(expected_label)
+				return is_space.And(nlabel_expected)
+			}
+			preds = append(preds, f)
 		}
 	}
-
-	nonWallNeighbors := b.countCells(neighbor_sym, b.predNE(Wall), &constname)
-
-	b.slv.Assert(cellIsSpace.Implies(nonWallNeighbors.GE(minNonWallNeighbors)))
+	constname := fmt.Sprintf("cell_%d_%d_neighbor", x, y)
+	count := b.countCellsMany(neighbors, preds, &constname)
+	// if current cell is a space and its label is NOT zero, then there must be at least once neighbor
+	// with a label (this cell's label) - 1
+	cond := b.predEq(Space)(cell).And(cell_label.NE(b.intToConst(0))).Implies(count.GE(b.intToConst(1)))
+	b.slv.Assert(cond)
 }
 
 func (b *Board) checkTreasure(x int, y int) {
-	room := append(chebyshevDistanceOffsets(1), chebyshevDistanceOffsets(0)...)
-	walls := chebyshevDistanceOffsets(2)
+	room := append(chebyshevDistanceNeighbors(1), chebyshevDistanceNeighbors(0)...)
+	walls := chebyshevDistanceNeighborsSansCorners(2)
 	// find center of room
 	var cond *z3.Bool = nil
 RoomLoop:
@@ -153,11 +165,14 @@ RoomLoop:
 		entrance := b.countCells(wall_sym, b.predNE(Wall), &constname).Eq(b.intToConst(1))
 
 		// each room must have exactly one treasure
+		constname = fmt.Sprintf("room_%d_%d_treasure", s_x, s_y)
 		treasure_count := b.countCells(room_sym, b.predEq(Treasure), &constname).Eq(b.intToConst(1))
 		// each room must contain exactly 8 spaces
+		constname = fmt.Sprintf("room_%d_%d_spaces", s_x, s_y)
 		space_count := b.countCells(room_sym, b.predEq(Space), &constname).Eq(b.intToConst(9 - 1))
 
 		inner_cond := entrance.And(treasure_count).And(space_count)
+
 		if cond == nil {
 			cond = &inner_cond
 		} else {
@@ -169,7 +184,7 @@ RoomLoop:
 }
 
 // Returns a list of offsets representing neighbors that are n chebyshev distance away
-func chebyshevDistanceOffsets(d int) [][2]int {
+func chebyshevDistanceNeighbors(d int) [][2]int {
 	var neighbors [][2]int
 	for x := -d; x <= d; x++ {
 		if ix.Abs(x) != d {
@@ -179,6 +194,23 @@ func chebyshevDistanceOffsets(d int) [][2]int {
 			for y := -d; y <= d; y++ {
 				neighbors = append(neighbors, [2]int{x, y})
 			}
+		}
+	}
+	return neighbors
+}
+
+func chebyshevDistanceNeighborsSansCorners(d int) [][2]int {
+	var neighbors [][2]int
+	cneighbors := chebyshevDistanceNeighbors(2)
+	for _, neighbor := range cneighbors {
+		x := ix.Abs(neighbor[0])
+		y := ix.Abs(neighbor[1])
+		if x == d && y == d {
+			log.Debug("Skipping neighbor %s", neighbor)
+
+		} else {
+			log.Debug("Appending neighbor %s", neighbor)
+			neighbors = append(neighbors, neighbor)
 		}
 	}
 	return neighbors

@@ -4,7 +4,6 @@ import (
 	"dungeons-and-diagrams/style"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 )
 
 func (m Model) View() string {
@@ -25,12 +24,7 @@ func (m Model) View() string {
 		return s
 	})
 
-	sat, err := m.Board.Check()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	if sat {
+	if m.sat {
 		m.table.BorderStyle(style.SatBorder)
 	} else {
 		m.table.BorderStyle(style.UnsatBorder)

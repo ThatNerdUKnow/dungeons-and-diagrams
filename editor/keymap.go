@@ -75,15 +75,13 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{{k.Quit, k.Help}, {k.Up, k.Down, k.Left, k.Right}, {k.Numeric, k.Space, k.Wall, k.Monster, k.Treasure}, {k.Delete, k.Solve}}
 }
 
-func (m *Model) UpdateKeymap() {
+func (m *Model) UpdateKeymap(checksat bool) {
 	cursorTopLeft := m.InCorner()
 
 	// true: cursor is inside the board cells - false: cursor is in the header section
-	var cursorInBoard bool
 
-	cursorInBoard = m.InBoard()
+	cursorInBoard := m.InBoard()
 
-	//logger := log.With("cursorTopLeft", cursorTopLeft, "cursorInBoard", cursorInBoard, "x", x, "y", y)
 	m.keymap.Numeric.SetEnabled(!cursorInBoard && !cursorTopLeft)
 	m.keymap.Space.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Wall.SetEnabled(cursorInBoard && !cursorTopLeft)
@@ -91,10 +89,13 @@ func (m *Model) UpdateKeymap() {
 	m.keymap.Treasure.SetEnabled(cursorInBoard && !cursorTopLeft)
 	m.keymap.Delete.SetEnabled(!cursorTopLeft)
 
-	sat, err := m.Check()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	if checksat {
+		sat, err := m.Check()
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
 
-	m.keymap.Solve.SetEnabled(sat)
+		m.keymap.Solve.SetEnabled(sat)
+		m.sat = sat
+	}
 }

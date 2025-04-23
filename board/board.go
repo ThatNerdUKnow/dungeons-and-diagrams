@@ -1,7 +1,6 @@
 package board
 
 import (
-	"dungeons-and-diagrams/style"
 	"fmt"
 
 	"github.com/aclements/go-z3/z3"
@@ -39,15 +38,16 @@ func (e Cell) String() string {
 }
 
 type Board struct {
-	Name       string
-	Cells      [BOARD_DIM][BOARD_DIM]Cell
-	ColTotals  [BOARD_DIM]*int
-	RowTotals  [BOARD_DIM]*int
-	colSymbols [BOARD_DIM]z3.Int
-	rowSymbols [BOARD_DIM]z3.Int
-	symbols    [BOARD_DIM][BOARD_DIM]z3.Int
-	ctx        *z3.Context
-	slv        *z3.Solver
+	Name         string
+	Cells        [BOARD_DIM][BOARD_DIM]Cell
+	ColTotals    [BOARD_DIM]*int
+	RowTotals    [BOARD_DIM]*int
+	colSymbols   [BOARD_DIM]z3.Int
+	rowSymbols   [BOARD_DIM]z3.Int
+	symbols      [BOARD_DIM][BOARD_DIM]z3.Int
+	space_labels [BOARD_DIM][BOARD_DIM]z3.Int
+	ctx          *z3.Context
+	slv          *z3.Solver
 }
 
 func NewBoard(name string) Board {
@@ -61,6 +61,9 @@ func NewBoard(name string) Board {
 }
 
 func (b *Board) checkcells() {
+	var spaces []z3.Int
+	var preds []SymbolicPredicate
+
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
 			switch *Address(x, y, &b.Cells) {
@@ -71,13 +74,28 @@ func (b *Board) checkcells() {
 				}
 			case Space, Unknown:
 				{
+					// current checkspace implementation is unsuitable for most puzzles
+					// only really need this if we're doing puzzle generation
 					b.checkSpace(x, y)
+					l := *Address(x, y, &b.space_labels)
+					// i is a space and has a label of 0
+					f := func(i z3.Int) z3.Bool {
+						return z3.Bool(b.intToConst(0).Eq(l)).And(b.predEq(Space)(i))
+					}
+					space := *Address(x, y, &b.symbols)
+					spaces = append(spaces, space)
+					preds = append(preds, f)
 				}
 			case Treasure:
 				b.checkTreasure(x, y)
 			}
 		}
 	}
+	// Only one space may have a label of 0
+	constname := "space_label_limit"
+	count := b.countCellsMany(spaces, preds, &constname)
+	cond := count.Eq(b.intToConst(1))
+	b.slv.Assert(cond)
 }
 
 func (b *Board) SetRowTotals(totals [BOARD_DIM]int) {
@@ -127,20 +145,9 @@ func (b *Board) GetCell(x int, y int) Cell {
 }
 
 func (b Board) String() string {
-	t := table.
-		New().
-		Border(lipgloss.DoubleBorder()).
-		BorderStyle(lipgloss.NewStyle().
-			Foreground(style.Purple).Blink(true)).BorderColumn(false).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == 0 && col > 0 {
-				return lipgloss.NewStyle().BorderBottom(true).Bold(true).Align(lipgloss.Right).Border(lipgloss.RoundedBorder(), false, true, true, false)
-			}
-			if col == 0 && row > 0 {
+	t := table.New()
 
-			}
-			return lipgloss.NewStyle().Align(lipgloss.Right).Bold(true)
-		})
+	t.BorderColumn(false)
 
 	var header [BOARD_DIM + 1]string
 	header[0] = " "
@@ -167,7 +174,7 @@ func (b Board) String() string {
 		}
 		t.Row(row[:]...)
 	}
-	return t.Render()
+	return lipgloss.JoinVertical(lipgloss.Left, b.Name, t.Render())
 }
 
 func (b *Board) Build() {
@@ -197,7 +204,10 @@ func (b *Board) Build() {
 				sym = b.intToConst(int(*c))
 			}
 			*Address(x, y, &b.symbols) = sym
-			log.Debugf("created symbol %s", sym)
+
+			label_constname := fmt.Sprintf("label_%d_%d", x, y)
+			label_sym := b.ctx.IntConst(label_constname)
+			*Address(x, y, &b.space_labels) = label_sym
 		}
 	}
 	b.checkcols()
@@ -229,19 +239,19 @@ func (b Board) Solve() (*Board, error) {
 	nb := NewBoard(fmt.Sprintf("%s (solved)", b.Name))
 	nb.RowTotals = b.RowTotals
 	for x := range BOARD_DIM {
-		val, _, _ := m.Eval(b.colSymbols[x], true).(z3.Int).AsInt64()
-		valPtr := int(val)
-		nb.SetColTotal(x)(&valPtr)
-		val, _, _ = m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
-		valPtr = int(val)
-		nb.SetRowTotal(x)(&valPtr)
+		colval, _, _ := m.Eval(b.colSymbols[x], true).(z3.Int).AsInt64()
+		colvalPtr := int(colval)
+		nb.SetColTotal(x)(&colvalPtr)
+		rowval, _, _ := m.Eval(b.rowSymbols[x], true).(z3.Int).AsInt64()
+		rowvalPtr := int(rowval)
+		nb.SetRowTotal(x)(&rowvalPtr)
 		for y := range BOARD_DIM {
 			v := m.Eval(*Address(x, y, &b.symbols), true).(z3.Int)
 			val, _, _ := v.AsInt64()
 			*Address(x, y, &nb.Cells) = Cell(val)
 		}
 	}
-
+	log.Debugf("Solved\n%s", nb)
 	return &nb, nil
 }
 
