@@ -108,7 +108,7 @@ func (b *Board) checkSpace(x int, y int) {
 				is_space := b.predEq(Space)(i)
 				expected_label := cell_label.Sub(b.intToConst(1))
 				nlabel_expected := nlabel.Eq(expected_label)
-				return is_space.Implies(nlabel_expected)
+				return is_space.And(nlabel_expected)
 			}
 			preds = append(preds, f)
 		}

@@ -61,6 +61,9 @@ func NewBoard(name string) Board {
 }
 
 func (b *Board) checkcells() {
+	var spaces []z3.Int
+	var preds []SymbolicPredicate
+
 	for x := range BOARD_DIM {
 		for y := range BOARD_DIM {
 			switch *Address(x, y, &b.Cells) {
@@ -74,12 +77,25 @@ func (b *Board) checkcells() {
 					// current checkspace implementation is unsuitable for most puzzles
 					// only really need this if we're doing puzzle generation
 					b.checkSpace(x, y)
+					l := *Address(x, y, &b.space_labels)
+					// i is a space and has a label of 0
+					f := func(i z3.Int) z3.Bool {
+						return z3.Bool(b.intToConst(0).Eq(l)).And(b.predEq(Space)(i))
+					}
+					space := *Address(x, y, &b.symbols)
+					spaces = append(spaces, space)
+					preds = append(preds, f)
 				}
 			case Treasure:
 				b.checkTreasure(x, y)
 			}
 		}
 	}
+	// Only one space may have a label of 0
+	constname := "space_label_limit"
+	count := b.countCellsMany(spaces, preds, &constname)
+	cond := count.Eq(b.intToConst(1))
+	b.slv.Assert(cond)
 }
 
 func (b *Board) SetRowTotals(totals [BOARD_DIM]int) {
@@ -189,7 +205,7 @@ func (b *Board) Build() {
 			}
 			*Address(x, y, &b.symbols) = sym
 
-			label_constname := fmt.Sprintf("cell_%d_%d_label", x, y)
+			label_constname := fmt.Sprintf("label_%d_%d", x, y)
 			label_sym := b.ctx.IntConst(label_constname)
 			*Address(x, y, &b.space_labels) = label_sym
 		}

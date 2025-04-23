@@ -37,13 +37,15 @@ func (b *Board) countCellsMany(cells []z3.Int, preds []SymbolicPredicate, name *
 		log.Fatalf("predicate and cell count do not match")
 	}
 	singlePred := len(preds) == 1
-	var sum z3.Int
-	if name != nil {
-		sum = b.ctx.IntConst(*name)
-		b.slv.Assert(sum.Eq(b.intToConst(0)))
-	} else {
-		sum = b.intToConst(0)
-	}
+	sum := b.intToConst(0)
+	/*
+		var sum z3.Int
+		if name != nil {
+			sum = b.ctx.IntConst(*name)
+			b.slv.Assert(sum.Eq(b.intToConst(0)))
+		} else {
+			sum = b.intToConst(0)
+		}*/
 
 	for i, cell := range cells {
 		var pred SymbolicPredicate
@@ -55,5 +57,11 @@ func (b *Board) countCellsMany(cells []z3.Int, preds []SymbolicPredicate, name *
 		p := pred(cell)
 		AddBoolToInt(&sum, &p)
 	}
-	return sum
+	if name != nil {
+		alt := b.ctx.IntConst(*name)
+		b.slv.Assert(alt.Eq(sum))
+		return alt
+	} else {
+		return sum
+	}
 }
