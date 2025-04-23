@@ -19,22 +19,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Up):
 			{
 				m.cursor.Y.Dec()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Down):
 			{
 				m.cursor.Y.Inc()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Left):
 			{
 				m.cursor.X.Dec()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Right):
 			{
 				m.cursor.X.Inc()
-				m.UpdateKeymap()
+				m.UpdateKeymap(false)
 			}
 		case key.Matches(msg, m.keymap.Quit):
 			{
@@ -102,7 +102,7 @@ func (m *Model) SetCell(cell board.Cell) {
 	m.Board.SetCell(x, y, cell)
 	m.Board.Build()
 	m.UpdateTable()
-	m.UpdateKeymap()
+	m.UpdateKeymap(true)
 }
 
 func (m *Model) SetHeader(i *int) {
@@ -132,7 +132,7 @@ func (m *Model) SetHeader(i *int) {
 	}
 	m.UpdateTable()
 	m.Board.Build()
-	m.UpdateKeymap()
+	m.UpdateKeymap(true)
 }
 
 // Is the cursor currently pointing inside the board
