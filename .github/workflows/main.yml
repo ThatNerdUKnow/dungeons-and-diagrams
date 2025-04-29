@@ -17,6 +17,7 @@ jobs:
       - run: echo ${{env.CPATH}}
       - run: echo ${{env.LIBRARY_PATH}}
       - run: ls ${{env.LIBRARY_PATH}}
+      - run: objdump -a ${{env.LIBRARY_PATH}}/libz3.a
       - run: go build .
         env: 
           CGO_LDFLAGS: -L ${{env.LIBRARY_PATH}}
