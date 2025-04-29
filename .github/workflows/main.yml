@@ -17,3 +17,6 @@ jobs:
       - run: echo ${{env.CPATH}}
       - run: echo ${{env.LIBRARY_PATH}}
       - run: go build .
+        env: 
+          CGO_LDFLAGS: -L ${{env.LIBRARY_PATH}}
+          
