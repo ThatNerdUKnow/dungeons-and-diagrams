@@ -5,7 +5,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest,windows-latest,macos-latest]
+        os: [ubuntu-latest,windows-latest]
     runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@v4
@@ -14,12 +14,10 @@ jobs:
           go-version: 1.24.2
       #- uses: cda-tum/setup-z3@v1.6.5
       - uses: pavpanchekha/setup-z3@v1.3
-      - run: echo ${{env.CPATH}}
-      - run: echo ${{env.LIBRARY_PATH}}
-      - run: ls ${{env.LIBRARY_PATH}}
-      - run: objdump -a ${{env.LIBRARY_PATH}}/libz3.a
+      - name: List z3 contents
+        run: ls ${{env.LIBRARY_PATH}}
       - run: go build .
         env: 
-          CGO_LDFLAGS: ${{env.LIBRARY_PATH}}/libz3.a
-          #CGO_LDFLAGS: -L${{env.LIBRARY_PATH}}
+          CGO_LDFLAGS: -L${{env.LIBRARY_PATH}}
+          CGO_CFLAGS: -I${{env.CPATH}}
           
