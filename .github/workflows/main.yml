@@ -2,4 +2,6 @@ name: "Test"
 on: workflow_dispatch
 jobs:
   checkout:
-    uses: actions/checkout@v4
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
