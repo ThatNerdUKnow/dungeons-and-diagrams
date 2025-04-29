@@ -17,7 +17,7 @@ jobs:
       - name: List z3 contents
         run: ls ${{env.LIBRARY_PATH}}
       - name: (windows only) set env vars another way
-        if: matrix.os == windows-latest
+        if: matrix.os == "windows-latest"
         run: set CGO_CFLAGS=${{env.CPATH}}
       - run: go build .
         env: 
