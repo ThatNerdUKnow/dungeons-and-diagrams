@@ -1,0 +1,5 @@
+name: "Test"
+on: workflow_dispatch
+jobs:
+  checkout:
+    uses: actions/checkout@v4
