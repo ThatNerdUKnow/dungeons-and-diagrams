@@ -14,4 +14,6 @@ jobs:
           go-version: 1.24.2
       #- uses: cda-tum/setup-z3@v1.6.5
       - uses: pavpanchekha/setup-z3@v1.3
+      - run: echo ${{env.CPATH}}
+      - run: echo ${{env.LIBRARY_PATH}}
       - run: go build .
